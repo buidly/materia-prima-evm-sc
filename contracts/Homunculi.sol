@@ -19,6 +19,8 @@ contract MPResources is ERC721, Ownable, Pausable {
     mapping(string => uint256) public availableAssetsIds;
     mapping(string => string) public collectionHash;
 
+    event NFTMinted(address indexed to, uint256 tokenId, string id);
+
     constructor() ERC721("MPHomunculi", "MPHOM") Ownable(msg.sender) {}
 
     function setNftDetails(
@@ -38,5 +40,27 @@ contract MPResources is ERC721, Ownable, Pausable {
         mediaType[id] = _mediaType;
         availableAssetsIds[id] = maxLen;
         collectionHash[id] = _collectionHash;
+    }
+
+    function mint(string memory id) public whenNotPaused {
+        require(
+            idLastMintedIndex[id] < availableAssetsIds[id],
+            "No more NFTs available to mint for this ID"
+        );
+
+        uint256 tokenId = _generateTokenId(id, idLastMintedIndex[id]);
+
+        _mint(msg.sender, tokenId);
+
+        idLastMintedIndex[id]++;
+
+        emit NFTMinted(msg.sender, tokenId, id);
+    }
+
+    function _generateTokenId(
+        string memory id,
+        uint256 index
+    ) internal pure returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(id, index)));
     }
 }
