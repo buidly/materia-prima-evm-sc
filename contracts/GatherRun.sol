@@ -18,28 +18,35 @@ contract GatherRun is Ownable, Pausable {
         bool isDisabled;
         uint64 duration;
         uint256 avgDrop;
-        Drop[] drops;
+        // Drop[] drops;
     }
 
     mapping(uint256 => Run) public runs;
 
     constructor() Ownable(msg.sender) {}
 
-    function createRun(uint64 duration, uint256 avgDrop, Drop[] memory drops) public onlyOwner {
+    // function createRun(uint64 duration, uint256 avgDrop, Drop[] memory drops) public onlyOwner {
+    function createRun(uint64 duration, uint256 avgDrop) public onlyOwner {
         runs[nextRunId] = Run({
             duration: duration,
             avgDrop: avgDrop,
-            drops: drops,
+            // drops: new Drop[](0),
             isDisabled: false
         });
         nextRunId++;
     }
 
-    function updateRun(uint256 runId, uint64 duration, uint256 avgDrop, Drop[] memory drops) public onlyOwner {
+    // TODO
+    // function updateRun(uint256 runId, uint64 duration, uint256 avgDrop, Drop[] memory drops) public onlyOwner {
+    function updateRun(
+        uint256 runId,
+        uint64 duration,
+        uint256 avgDrop
+    ) public onlyOwner {
         runs[runId] = Run({
             duration: duration,
             avgDrop: avgDrop,
-            drops: drops,
+            // drops: drops,
             isDisabled: runs[runId].isDisabled
         });
     }
