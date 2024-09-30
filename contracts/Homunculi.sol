@@ -2,13 +2,20 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-contract Homunculi is ERC721, ERC721URIStorage, Ownable, Pausable {
+contract Homunculi is
+    Initializable,
+    ERC721Upgradeable,
+    ERC721URIStorageUpgradeable,
+    OwnableUpgradeable,
+    PausableUpgradeable
+{
     struct NftDetails {
         string name;
         uint64 royalties;
@@ -24,7 +31,10 @@ contract Homunculi is ERC721, ERC721URIStorage, Ownable, Pausable {
 
     event NFTMinted(address indexed to, uint256 tokenId, string id);
 
-    constructor() ERC721("MPHomunculi", "MPHOM") Ownable(msg.sender) {}
+    function initialize() public initializer {
+        __ERC721_init("MPHomunculi", "MPHOM");
+        __Ownable_init(msg.sender);
+    }
 
     function setNftDetails(
         string memory id,
@@ -97,13 +107,23 @@ contract Homunculi is ERC721, ERC721URIStorage, Ownable, Pausable {
     // Overrides required by Solidity
     function supportsInterface(
         bytes4 interfaceId
-    ) public view override(ERC721, ERC721URIStorage) returns (bool) {
+    )
+        public
+        view
+        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId);
     }
 
     function tokenURI(
         uint256 tokenId
-    ) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+    )
+        public
+        view
+        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
+        returns (string memory)
+    {
         return super.tokenURI(tokenId);
     }
 }

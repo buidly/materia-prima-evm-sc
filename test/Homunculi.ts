@@ -1,6 +1,6 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
-import { Homunculi, Homunculi__factory } from "../typechain-types";
+import { ethers, upgrades } from "hardhat";
+import { Homunculi, Homunculi__factory, HomunculiV2, HomunculiV2__factory } from "../typechain-types";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("Homunculi Contract", function () {
@@ -11,7 +11,7 @@ describe("Homunculi Contract", function () {
     const HomunculiFactory = (await ethers.getContractFactory("Homunculi")) as Homunculi__factory;
     [owner, addr1, addr2] = await ethers.getSigners();
 
-    homunculi = await HomunculiFactory.deploy();
+    homunculi = await upgrades.deployProxy(HomunculiFactory, [], { initializer: "initialize" }) as any as Homunculi;
     await homunculi.waitForDeployment();
   });
 
@@ -142,6 +142,28 @@ describe("Homunculi Contract", function () {
       await expect(
         homunculi.connect(addr1).mint(nftId)
       ).to.be.revertedWithCustomError(homunculi, "EnforcedPause");
+    });
+  });
+
+  describe("Upgrading the contract", function () {
+    it("Should upgrade the contract", async function () {
+      const homunculiAddress = await homunculi.getAddress();
+
+      const HomunculiV2Factory = (await ethers.getContractFactory("HomunculiV2")) as HomunculiV2__factory;
+      await upgrades.upgradeProxy(homunculiAddress, HomunculiV2Factory);
+
+      const homunculiV2 = HomunculiV2Factory.attach(homunculiAddress) as HomunculiV2;
+      expect(await homunculiV2.owner()).to.equal(owner.address);
+    });
+
+    it("Should not allow non-owner to upgrade the contract", async function () {
+      const homunculiAddress = await homunculi.getAddress();
+
+      const HomunculiV2Factory = (await ethers.getContractFactory("HomunculiV2")) as HomunculiV2__factory;
+
+      await expect(
+        upgrades.upgradeProxy(homunculiAddress, HomunculiV2Factory.connect(addr1))
+      ).to.be.revertedWithCustomError(homunculi, "OwnableUnauthorizedAccount");
     });
   });
 });
