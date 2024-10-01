@@ -21,6 +21,7 @@ contract Homunculi is
         uint64 royalties;
     }
 
+    uint256 public totalSupply;
     mapping(string => NftDetails) public nftDetails;
     mapping(string => uint64) public nftTier;
     mapping(string => uint256) public idLastMintedIndex;
@@ -28,6 +29,7 @@ contract Homunculi is
     mapping(string => string) public mediaType;
     mapping(string => uint256) public availableAssetsIds;
     mapping(string => string) public collectionHash;
+    mapping(string => mapping(uint256 => uint256)) private _tokenMatrix;
 
     event NFTMinted(address indexed to, uint256 tokenId, string id);
 
@@ -57,13 +59,23 @@ contract Homunculi is
 
     function mint(string memory id) public whenNotPaused {
         require(
+            bytes(nftDetails[id].name).length > 0,
+            "ID does not exist in the contract"
+        );
+        require(
             idLastMintedIndex[id] < availableAssetsIds[id],
             "No more NFTs available to mint for this ID"
         );
 
-        uint256 index = idLastMintedIndex[id];
-        uint256 tokenId = _generateTokenId(id, index);
+        uint256 remaining = availableAssetsIds[id] - idLastMintedIndex[id];
+        uint256 randomIndex = _getRandomNumber(remaining) + 1; // Adjusted to start from 1
+        uint256 assetIndex = _getAssetIndex(id, randomIndex);
 
+        // Update the token matrix
+        _tokenMatrix[id][randomIndex] = _getAssetIndex(id, remaining - 1);
+
+        totalSupply++;
+        uint256 tokenId = totalSupply;
         _safeMint(msg.sender, tokenId);
 
         string memory tokenUri = string(
@@ -72,7 +84,7 @@ contract Homunculi is
                 "/",
                 id,
                 "/",
-                Strings.toString(index),
+                Strings.toString(assetIndex),
                 ".",
                 mediaType[id]
             )
@@ -85,11 +97,29 @@ contract Homunculi is
         emit NFTMinted(msg.sender, tokenId, id);
     }
 
-    function _generateTokenId(
+    function _getRandomNumber(uint256 upper) private view returns (uint256) {
+        // WARNING: This is not secure randomness
+        return
+            uint256(
+                keccak256(
+                    abi.encodePacked(
+                        block.timestamp,
+                        block.prevrandao,
+                        msg.sender
+                    )
+                )
+            ) % upper;
+    }
+
+    function _getAssetIndex(
         string memory id,
         uint256 index
-    ) internal pure returns (uint256) {
-        return uint256(keccak256(abi.encodePacked(id, index)));
+    ) private view returns (uint256) {
+        if (_tokenMatrix[id][index] != 0) {
+            return _tokenMatrix[id][index];
+        } else {
+            return index;
+        }
     }
 
     function getTags(string memory id) public view returns (string[] memory) {

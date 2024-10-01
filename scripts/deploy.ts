@@ -10,6 +10,30 @@ async function main() {
 
   const homunculiAddress = await homunculi.getAddress();
   console.log("Homunculi deployed to:", homunculiAddress);
+
+  await homunculi.setNftDetails(
+    "Branos",
+    "Branos",
+    "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
+    ["MateriaPrima", "Homunculi", "Branos", "Laboratory", "Alchemist", "Arena"],
+    "png",
+    2500,
+    1000,
+    1
+  );
+  console.log("NFT details set for Branos");
+
+  await homunculi.setNftDetails(
+    "Glys",
+    "Glys",
+    "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
+    ["MateriaPrima", "Homunculi", "Glys", "Laboratory", "Alchemist", "Arena"],
+    "png",
+    2500,
+    1000,
+    1
+  );
+  console.log("NFT details set for Glys");
 }
 
 main()

@@ -104,16 +104,14 @@ describe("Homunculi Contract", function () {
     it("Should allow users to mint tier 1 NFTs", async function () {
       await homunculi.connect(addr1).mint(nftId);
 
-      // Calculate the expected tokenId
-      const index = 0;
-      const tokenId = BigInt(ethers.solidityPackedKeccak256(["string", "uint256"], [nftId, index]));
+      const tokenId = 1;
 
       // Verify ownership
       expect(await homunculi.ownerOf(tokenId)).to.equal(addr1.address);
 
       // Verify token URI
-      const expectedTokenUri = "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4/Branos/0.png";
-      expect(await homunculi.tokenURI(tokenId)).to.equal(expectedTokenUri);
+      const expectedTokenUriStart = "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4/Branos/";
+      expect(await homunculi.tokenURI(tokenId)).to.be.a("string").and.satisfy((uri: string) => uri.startsWith(expectedTokenUriStart));
     });
 
     it("Should not allow minting beyond available supply", async function () {
@@ -132,7 +130,7 @@ describe("Homunculi Contract", function () {
         .to.emit(homunculi, "NFTMinted")
         .withArgs(
           addr1.address,
-          ethers.solidityPackedKeccak256(["string", "uint256"], [nftId, 0]),
+          1,
           nftId
         );
     });
