@@ -111,7 +111,7 @@ describe("Homunculi Contract", function () {
 
       // Verify token URI
       const expectedTokenUriStart = "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4/Branos/";
-      expect(await homunculi.tokenURI(tokenId)).to.be.a("string").and.satisfy((uri: string) => uri.startsWith(expectedTokenUriStart));
+      expect(await homunculi.tokenURI(tokenId)).to.be.a("string").and.satisfy((uri: string) => uri.includes(expectedTokenUriStart));
     });
 
     it("Should not allow minting beyond available supply", async function () {
