@@ -80,6 +80,7 @@ contract Homunculi is
 
         string memory tokenUri = string(
             abi.encodePacked(
+                "https://ipfs.io/ipfs/",
                 collectionHash[id],
                 "/",
                 id,
