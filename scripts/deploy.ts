@@ -36,6 +36,8 @@ async function main() {
   );
   await homunculi.setMintPrice("Glys", ethers.parseEther("0.0001"));
   console.log("NFT details set for Glys");
+
+  await homunculi.setSignerAddress("0x48Ff04a4F09562c0e5345234a06F6B02A3514aCf");
 }
 
 main()

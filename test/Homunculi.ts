@@ -4,7 +4,8 @@ import { Homunculi, Homunculi__factory, HomunculiV2, HomunculiV2__factory } from
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("Homunculi Contract", function () {
-  let homunculi: Homunculi;
+  let chainId: bigint;
+  let homunculi: Homunculi; let homunculiAddress: string;
   let owner: SignerWithAddress, addr1: SignerWithAddress, addr2: SignerWithAddress;
 
   beforeEach(async function () {
@@ -13,6 +14,9 @@ describe("Homunculi Contract", function () {
 
     homunculi = await upgrades.deployProxy(HomunculiFactory, [], { initializer: "initialize" }) as any as Homunculi;
     await homunculi.waitForDeployment();
+    homunculiAddress = await homunculi.getAddress();
+
+    chainId = (await ethers.provider.getNetwork()).chainId;
   });
 
   describe("Deployment", function () {
@@ -187,6 +191,100 @@ describe("Homunculi Contract", function () {
       await expect(
         upgrades.upgradeProxy(homunculiAddress, HomunculiV2Factory.connect(addr1))
       ).to.be.revertedWithCustomError(homunculi, "OwnableUnauthorizedAccount");
+    });
+  });
+
+  describe.only("Updating homunculi experience", function () {
+    let domain: any;
+    const types = {
+      Experience: [
+        { name: "tokenId", type: "uint256" },
+        { name: "newExperience", type: "uint256" },
+        { name: "timestamp", type: "uint256" },
+      ],
+    };
+
+    beforeEach(async function () {
+      domain = {
+        name: "MPHomunculi",
+        version: "1",
+        chainId,
+        verifyingContract: homunculiAddress,
+      };
+
+      await homunculi.setNftDetails(
+        "Branos",
+        "Branos",
+        "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
+        ["MateriaPrima", "Homunculi", "Branos", "Laboratory", "Alchemist", "Arena"],
+        "png",
+        2, // maxLen
+        500,
+        1 // tier
+      );
+
+      await homunculi.setMintPrice("Branos", ethers.parseEther("0.1"));
+
+      await homunculi.connect(addr1).mint("Branos", { value: ethers.parseEther("0.1") });
+
+      await homunculi.setSignerAddress(owner.address);
+    });
+
+    it("Should not allow non-owner to update experience", async function () {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const value = {
+        tokenId: 1,
+        newExperience: 30,
+        timestamp,
+      };
+      const signature = await addr1.signTypedData(domain, types, value);
+
+      await expect(
+        homunculi.connect(addr1).updateExperience(1, 30, timestamp, signature)
+      ).to.be.revertedWith("Invalid signature");
+    });
+
+    it("Should allow owner to update experience", async function () {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const value = {
+        tokenId: 1,
+        newExperience: 30,
+        timestamp,
+      };
+      const signature = await owner.signTypedData(domain, types, value);
+
+      await homunculi.updateExperience(1, 30, timestamp, signature);
+
+      const experience = await homunculi.experience(1);
+      expect(experience).to.equal(30);
+    });
+
+    it("Should not allow updating experience for non-existent token", async function () {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const value = {
+        tokenId: 2,
+        newExperience: 30,
+        timestamp,
+      };
+      const signature = await owner.signTypedData(domain, types, value);
+
+      await expect(
+        homunculi.updateExperience(2, 30, timestamp, signature)
+      ).to.be.revertedWith("Token does not exist");
+    });
+
+    it("Should not allow updating experience with an expired signature", async function () {
+      const timestamp = Math.floor(Date.now() / 1000) - 1000;
+      const value = {
+        tokenId: 1,
+        newExperience: 30,
+        timestamp,
+      };
+      const signature = await owner.signTypedData(domain, types, value);
+
+      await expect(
+        homunculi.updateExperience(1, 30, timestamp, signature)
+      ).to.be.revertedWith("Signature expired");
     });
   });
 });

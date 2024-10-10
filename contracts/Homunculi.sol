@@ -10,6 +10,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 contract Homunculi is
     Initializable,
@@ -33,12 +34,33 @@ contract Homunculi is
     mapping(string => string) public collectionHash;
     mapping(string => mapping(uint256 => uint256)) private _tokenMatrix;
     mapping(string => uint256) public mintPrice;
+    mapping(uint256 => uint256) public experience;
+
+    address private signerAddress;
+    bytes32 private constant EXPERIENCE_TYPEHASH =
+        keccak256(
+            "Experience(uint256 tokenId,uint256 newExperience,uint256 timestamp)"
+        );
+    bytes32 private DOMAIN_SEPARATOR;
 
     event NFTMinted(address indexed to, uint256 tokenId, string id);
+    event ExperienceUpdated(uint256 tokenId, uint256 newExperience);
 
     function initialize() public initializer {
         __ERC721_init("MPHomunculi", "MPHOM");
         __Ownable_init(msg.sender);
+
+        DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
+                keccak256(bytes("MPHomunculi")),
+                keccak256(bytes("1")),
+                block.chainid,
+                address(this)
+            )
+        );
     }
 
     function setNftDetails(
@@ -100,6 +122,8 @@ contract Homunculi is
 
         _setTokenURI(tokenId, tokenUri);
 
+        experience[tokenId] = 0;
+
         idLastMintedIndex[id]++;
 
         emit NFTMinted(msg.sender, tokenId, id);
@@ -134,6 +158,33 @@ contract Homunculi is
         return tags[id];
     }
 
+    function updateExperience(
+        uint256 tokenId,
+        uint256 newExperience,
+        uint256 timestamp,
+        bytes memory signature
+    ) public {
+        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        require(signerAddress != address(0), "Signer address not set");
+        require(block.timestamp >= timestamp, "Invalid timestamp");
+        require(block.timestamp <= timestamp + 60, "Signature expired");
+
+        bytes32 structHash = keccak256(
+            abi.encode(EXPERIENCE_TYPEHASH, tokenId, newExperience, timestamp)
+        );
+        bytes32 digest = keccak256(
+            abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash)
+        );
+
+        address recoveredAddress = ECDSA.recover(digest, signature);
+
+        require(recoveredAddress == signerAddress, "Invalid signature");
+
+        experience[tokenId] = newExperience;
+
+        emit ExperienceUpdated(tokenId, newExperience);
+    }
+
     function pause() public onlyOwner {
         _pause();
     }
@@ -148,6 +199,10 @@ contract Homunculi is
 
     function withdraw() public onlyOwner {
         payable(owner()).transfer(address(this).balance);
+    }
+
+    function setSignerAddress(address _signerAddress) public onlyOwner {
+        signerAddress = _signerAddress;
     }
 
     // Overrides required by Solidity
