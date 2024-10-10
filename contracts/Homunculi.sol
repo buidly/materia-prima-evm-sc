@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URISto
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Homunculi is
     Initializable,
@@ -31,6 +32,7 @@ contract Homunculi is
     mapping(string => uint256) public availableAssetsIds;
     mapping(string => string) public collectionHash;
     mapping(string => mapping(uint256 => uint256)) private _tokenMatrix;
+    mapping(string => uint256) public mintPrice;
 
     event NFTMinted(address indexed to, uint256 tokenId, string id);
 
@@ -58,7 +60,7 @@ contract Homunculi is
         collectionHash[id] = _collectionHash;
     }
 
-    function mint(string memory id) public whenNotPaused {
+    function mint(string memory id) public payable whenNotPaused {
         require(
             bytes(nftDetails[id].name).length > 0,
             "ID does not exist in the contract"
@@ -66,6 +68,11 @@ contract Homunculi is
         require(
             idLastMintedIndex[id] < availableAssetsIds[id],
             "No more NFTs available to mint for this ID"
+        );
+        require(mintPrice[id] > 0, "Mint price not set for this ID");
+        require(
+            msg.value == mintPrice[id],
+            "Insufficient funds to mint this NFT"
         );
 
         uint256 remaining = availableAssetsIds[id] - idLastMintedIndex[id];
@@ -133,6 +140,14 @@ contract Homunculi is
 
     function unpause() public onlyOwner {
         _unpause();
+    }
+
+    function setMintPrice(string memory id, uint256 price) public onlyOwner {
+        mintPrice[id] = price;
+    }
+
+    function withdraw() public onlyOwner {
+        payable(owner()).transfer(address(this).balance);
     }
 
     // Overrides required by Solidity

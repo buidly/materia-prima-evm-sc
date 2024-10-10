@@ -21,6 +21,7 @@ async function main() {
     1000,
     1
   );
+  await homunculi.setMintPrice("Branos", ethers.parseEther("0.0001"));
   console.log("NFT details set for Branos");
 
   await homunculi.setNftDetails(
@@ -33,6 +34,7 @@ async function main() {
     1000,
     1
   );
+  await homunculi.setMintPrice("Glys", ethers.parseEther("0.0001"));
   console.log("NFT details set for Glys");
 }
 

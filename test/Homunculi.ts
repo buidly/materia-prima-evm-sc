@@ -86,6 +86,7 @@ describe("Homunculi Contract", function () {
 
   describe("Minting NFTs", function () {
     const nftId = "Branos";
+    const nftPrice = ethers.parseEther("0.1");
 
     beforeEach(async function () {
       // Set up an NFT with tier 1
@@ -99,10 +100,12 @@ describe("Homunculi Contract", function () {
         500,
         1 // tier
       );
+
+      await homunculi.setMintPrice(nftId, nftPrice);
     });
 
     it("Should allow users to mint tier 1 NFTs", async function () {
-      await homunculi.connect(addr1).mint(nftId);
+      await homunculi.connect(addr1).mint(nftId, { value: nftPrice });
 
       const tokenId = 1;
 
@@ -116,8 +119,8 @@ describe("Homunculi Contract", function () {
 
     it("Should not allow minting beyond available supply", async function () {
       // Mint the maximum number of NFTs
-      await homunculi.connect(addr1).mint(nftId);
-      await homunculi.connect(addr2).mint(nftId);
+      await homunculi.connect(addr1).mint(nftId, { value: nftPrice });
+      await homunculi.connect(addr2).mint(nftId, { value: nftPrice });
 
       // Attempt to mint beyond the limit
       await expect(
@@ -125,8 +128,28 @@ describe("Homunculi Contract", function () {
       ).to.be.revertedWith("No more NFTs available to mint for this ID");
     });
 
+    it("Should not allow minting when the price is not set", async function () {
+      await homunculi.setMintPrice(nftId, 0);
+
+      await expect(
+        homunculi.connect(addr1).mint(nftId)
+      ).to.be.revertedWith("Mint price not set for this ID");
+    });
+
+    it("Should not allow minting with insufficient funds", async function () {
+      await expect(
+        homunculi.connect(addr1).mint(nftId, { value: ethers.parseEther("0.09") })
+      ).to.be.revertedWith("Insufficient funds to mint this NFT");
+    });
+
+    it("Should not allow minting with more funds than required", async function () {
+      await expect(
+        homunculi.connect(addr1).mint(nftId, { value: ethers.parseEther("0.10001") })
+      ).to.be.revertedWith("Insufficient funds to mint this NFT");
+    });
+
     it("Should emit NFTMinted event on successful mint", async function () {
-      await expect(homunculi.connect(addr1).mint(nftId))
+      await expect(homunculi.connect(addr1).mint(nftId, { value: nftPrice }))
         .to.emit(homunculi, "NFTMinted")
         .withArgs(
           addr1.address,
@@ -141,6 +164,8 @@ describe("Homunculi Contract", function () {
         homunculi.connect(addr1).mint(nftId)
       ).to.be.revertedWithCustomError(homunculi, "EnforcedPause");
     });
+
+    // it("Should")
   });
 
   describe("Upgrading the contract", function () {
