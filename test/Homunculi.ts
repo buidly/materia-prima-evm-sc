@@ -194,7 +194,7 @@ describe("Homunculi Contract", function () {
     });
   });
 
-  describe.only("Updating homunculi experience", function () {
+  describe("Updating homunculi experience", function () {
     let domain: any;
     const types = {
       Experience: [

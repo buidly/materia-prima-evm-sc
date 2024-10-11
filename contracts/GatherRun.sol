@@ -1,74 +1,132 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "hardhat/console.sol";
 
-contract GatherRun is Ownable, Pausable {
-    uint256 public nextRunId = 1;
+contract GatherRun is OwnableUpgradeable, PausableUpgradeable {
+    uint256 public nextRunId;
 
     struct Drop {
-        uint256 resourceId;
+        string resourceType;
+        uint256 resourceAmount;
         uint16 minProbability;
         uint16 maxProbability;
     }
 
-    struct Run {
-        bool isDisabled;
-        uint64 duration;
-        uint256 avgDrop;
-        // Drop[] drops;
+    mapping(uint256 => uint256) public durations;
+    mapping(uint256 => Drop[]) public drops;
+
+    event RunCreated(uint256 runId, uint256 duration, Drop[] drops);
+    event RunUpdated(uint256 runId, uint256 duration, Drop[] drops);
+
+    function initialize() public initializer {
+        __Ownable_init(msg.sender);
+        __Pausable_init();
+
+        nextRunId = 1;
     }
 
-    mapping(uint256 => Run) public runs;
+    function createRun(
+        uint256 duration,
+        Drop[] memory _drops
+    ) public onlyOwner {
+        _checkDropProbabilities(_drops);
 
-    constructor() Ownable(msg.sender) {}
+        durations[nextRunId] = duration;
 
-    // function createRun(uint64 duration, uint256 avgDrop, Drop[] memory drops) public onlyOwner {
-    function createRun(uint64 duration, uint256 avgDrop) public onlyOwner {
-        runs[nextRunId] = Run({
-            duration: duration,
-            avgDrop: avgDrop,
-            // drops: new Drop[](0),
-            isDisabled: false
-        });
+        Drop[] storage dropArray = drops[nextRunId];
+        for (uint256 i = 0; i < _drops.length; i++) {
+            dropArray.push(_drops[i]);
+        }
+
         nextRunId++;
+
+        emit RunCreated(nextRunId - 1, duration, _drops);
     }
 
-    // TODO
-    // function updateRun(uint256 runId, uint64 duration, uint256 avgDrop, Drop[] memory drops) public onlyOwner {
     function updateRun(
         uint256 runId,
-        uint64 duration,
-        uint256 avgDrop
+        uint256 duration,
+        Drop[] memory _drops
     ) public onlyOwner {
-        runs[runId] = Run({
-            duration: duration,
-            avgDrop: avgDrop,
-            // drops: drops,
-            isDisabled: runs[runId].isDisabled
-        });
+        require(runId < nextRunId, "Run does not exist");
+
+        _checkDropProbabilities(_drops);
+
+        durations[runId] = duration;
+
+        delete drops[runId];
+        Drop[] storage dropArray = drops[runId];
+        for (uint256 i = 0; i < _drops.length; i++) {
+            dropArray.push(_drops[i]);
+        }
+
+        emit RunUpdated(runId, duration, _drops);
     }
 
-    function disableRun(uint256 runId) public onlyOwner {
-        runs[runId].isDisabled = true;
+    function getDrops(uint256 runId) public view returns (Drop[] memory) {
+        return drops[runId];
     }
 
-    function enableRun(uint256 runId) public onlyOwner {
-        runs[runId].isDisabled = false;
-    }
+    function _checkDropProbabilities(Drop[] memory _drops) internal pure {
+        require(_drops.length > 0, "No drops provided");
 
-    function totalRuns() public view returns (uint256) {
-        return nextRunId;
-    }
+        uint256 minProbability = 10000;
+        uint256 maxProbability = 0;
+        uint16 expectedMinProbability = 0;
 
-    function getRun(uint256 runId) public view returns (Run memory) {
-        return runs[runId];
+        for (uint256 i = 0; i < _drops.length; i++) {
+            uint16 minProb = _drops[i].minProbability;
+            uint16 maxProb = _drops[i].maxProbability;
+
+            require(
+                minProb <= maxProb,
+                "minProbability cannot be greater than maxProbability"
+            );
+            require(
+                minProb >= 0 && minProb <= 10000,
+                "minProbability must be between 0 and 10000"
+            );
+            require(
+                maxProb >= 0 && maxProb <= 10000,
+                "maxProbability must be between 0 and 10000"
+            );
+            require(
+                minProb > 0 || maxProb > 0,
+                "Drop probabilities cannot both be zero"
+            );
+            require(
+                minProb == expectedMinProbability,
+                "Probability ranges must be sequential"
+            );
+
+            minProbability = minProbability < minProb
+                ? minProbability
+                : minProb;
+            maxProbability = maxProbability > maxProb
+                ? maxProbability
+                : maxProb;
+
+            expectedMinProbability = maxProb;
+        }
+
+        require(minProbability == 0, "First drop probability must be zero");
+        require(maxProbability >= 10000, "Last drop probability must be 10000");
     }
 
     // startGatherRun - as user with nft
     // sendAllEligibleToGather
     // claimAllGatherRunRewards
     // claimGatherRunRewards
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
+    }
 }
