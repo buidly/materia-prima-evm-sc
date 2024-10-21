@@ -1,19 +1,27 @@
 import { expect } from "chai";
 import { ethers, upgrades } from "hardhat";
-import { GatherRun, GatherRun__factory } from "../typechain-types";
+import { GatherRun, GatherRun__factory, Homunculi, Homunculi__factory } from "../typechain-types";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("GatherRun", function () {
+  let homunculi: Homunculi; let homunculiAddress: string;
   let gatherRun: GatherRun; let gatherRunAddress: string;
   let owner: SignerWithAddress, addr1: SignerWithAddress, addr2: SignerWithAddress;
 
   beforeEach(async function () {
-    const GatherRunFactory = (await ethers.getContractFactory("GatherRun")) as GatherRun__factory;
     [owner, addr1, addr2] = await ethers.getSigners();
 
+    const HomunculiFactory = (await ethers.getContractFactory("Homunculi")) as Homunculi__factory;
+    homunculi = await upgrades.deployProxy(HomunculiFactory, [], { initializer: "initialize" }) as any as Homunculi;
+    await homunculi.waitForDeployment();
+    homunculiAddress = await homunculi.getAddress();
+
+    const GatherRunFactory = (await ethers.getContractFactory("GatherRun")) as GatherRun__factory;
     gatherRun = await upgrades.deployProxy(GatherRunFactory, [], { initializer: "initialize" }) as any as GatherRun;
     await gatherRun.waitForDeployment();
     gatherRunAddress = await gatherRun.getAddress();
+
+    await gatherRun.acceptNftAddress(homunculiAddress);
   });
 
   describe("Deployment", function () {
@@ -270,6 +278,101 @@ describe("GatherRun", function () {
       await expect(
         gatherRun.updateRun(1, 7200, newDrops)
       ).to.be.revertedWith("Probability ranges must be sequential");
+    });
+  });
+
+  describe("Start expedition", function () {
+    beforeEach(async function () {
+      const initialDrops = [
+        {
+          resourceType: "FIRE_DUST",
+          resourceAmount: 1,
+          minProbability: 0,
+          maxProbability: 10000,
+        },
+      ];
+
+      await gatherRun.createRun(3600, initialDrops);
+
+      await homunculi.setNftDetails(
+        "Branos",
+        "Branos",
+        "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
+        ["MateriaPrima", "Homunculi", "Branos", "Laboratory", "Alchemist", "Arena"],
+        "png",
+        2500,
+        1000,
+        1,
+      );
+      await homunculi.setMintPrice("Branos", ethers.parseEther("0.1"));
+    });
+
+    it("should allow a user to start an expedition", async function () {
+      await homunculi.connect(addr1).mint("Branos", { value: ethers.parseEther("0.1") });
+
+      await homunculi.connect(addr1).approve(gatherRunAddress, 1);
+      await gatherRun.connect(addr1).startExpedition(1, homunculiAddress, 1);
+
+      const lockedHomunculi = await gatherRun.getLockedHomunculi(homunculiAddress, 1);
+
+      expect(lockedHomunculi.owner).to.equal(addr1.address);
+    });
+  });
+
+  describe("Withdraw NFT", function () {
+    beforeEach(async function () {
+      const initialDrops = [
+        {
+          resourceType: "FIRE_DUST",
+          resourceAmount: 1,
+          minProbability: 0,
+          maxProbability: 10000,
+        },
+      ];
+
+      await gatherRun.createRun(3600, initialDrops);
+
+      await homunculi.setNftDetails(
+        "Branos",
+        "Branos",
+        "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
+        ["MateriaPrima", "Homunculi", "Branos", "Laboratory", "Alchemist", "Arena"],
+        "png",
+        2500,
+        1000,
+        1,
+      );
+      await homunculi.setMintPrice("Branos", ethers.parseEther("0.1"));
+    });
+
+    it("should allow a user to withdraw their homunculus after the expedition is over", async function () {
+      await homunculi.connect(addr1).mint("Branos", { value: ethers.parseEther("0.1") });
+
+      await homunculi.connect(addr1).approve(gatherRunAddress, 1);
+      await gatherRun.connect(addr1).startExpedition(1, homunculiAddress, 1);
+
+      await ethers.provider.send("evm_increaseTime", [3600]);
+      await ethers.provider.send("evm_mine");
+
+      await gatherRun.connect(addr1).withdrawHomunculi(homunculi, 1);
+
+      const lockedHomunculi = await gatherRun.getLockedHomunculi(
+        homunculiAddress,
+        1
+      );
+
+      expect(lockedHomunculi.withdrawn).to.equal(true);
+    });
+
+    it("should revert if the homunculus is still locked", async function () {
+      await homunculi.connect(addr1).mint("Branos", { value: ethers.parseEther("0.1") });
+
+      await homunculi.connect(addr1).approve(gatherRunAddress, 1);
+      await gatherRun.connect(addr1).startExpedition(1, homunculiAddress, 1);
+
+      await expect(
+        gatherRun.connect(addr1).withdrawHomunculi(homunculiAddress, 1)
+      ).to.be.revertedWith("Homunculus is still locked");
     });
   });
 });
