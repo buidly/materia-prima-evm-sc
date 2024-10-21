@@ -1,5 +1,5 @@
 import { ethers, upgrades } from "hardhat";
-import { Homunculi, Homunculi__factory } from "../typechain-types";
+import { Homunculi, Homunculi__factory } from "../../typechain-types";
 
 async function main() {
   const homunculiAddress = "0x271205D00B914441EEEcd62D962e6C18B77C6A18";

@@ -1,5 +1,5 @@
 import { ethers, upgrades } from "hardhat";
-import { Homunculi, Homunculi__factory } from "../typechain-types";
+import { Homunculi, Homunculi__factory } from "../../typechain-types";
 
 async function main() {
   const HomunculiFactory = (await ethers.getContractFactory("Homunculi")) as Homunculi__factory;
