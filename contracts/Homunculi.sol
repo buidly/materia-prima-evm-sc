@@ -166,8 +166,8 @@ contract Homunculi is
     ) public {
         require(_ownerOf(tokenId) != address(0), "Token does not exist");
         require(signerAddress != address(0), "Signer address not set");
-        require(block.timestamp >= timestamp, "Invalid timestamp");
-        require(block.timestamp <= timestamp + 60, "Signature expired");
+        require(block.timestamp <= timestamp - 10, "Invalid timestamp");
+        require(block.timestamp <= timestamp + 80, "Signature expired");
 
         bytes32 structHash = keccak256(
             abi.encode(EXPERIENCE_TYPEHASH, tokenId, newExperience, timestamp)
