@@ -21,11 +21,17 @@ contract GatherRun is OwnableUpgradeable, PausableUpgradeable {
         bool withdrawn;
     }
 
+    struct LockedNFT {
+        address nfAddress;
+        uint256 tokenId;
+    }
+
     mapping(uint256 => uint256) public durations;
     mapping(uint256 => Drop[]) public drops;
     mapping(address => bool) public acceptedNftAddresses;
     mapping(address => mapping(uint256 => LockedHomunculi))
         public lockedHomunculi;
+    mapping(address => LockedNFT[]) public userLockedHomunculi;
 
     event RunCreated(uint256 runId, uint256 duration, Drop[] drops);
     event RunUpdated(uint256 runId, uint256 duration, Drop[] drops);
@@ -172,6 +178,10 @@ contract GatherRun is OwnableUpgradeable, PausableUpgradeable {
             withdrawn: false
         });
 
+        userLockedHomunculi[msg.sender].push(
+            LockedNFT({nfAddress: _nftAddress, tokenId: _tokenId})
+        );
+
         emit ExpeditionStarted(_runId, _nftAddress, _tokenId, unlockedTime);
     }
 
@@ -196,6 +206,8 @@ contract GatherRun is OwnableUpgradeable, PausableUpgradeable {
         IERC721 nftContract = IERC721(_nftAddress);
         nftContract.transferFrom(address(this), msg.sender, _tokenId);
 
+        _removeLockedNFTFromUserList(msg.sender, _nftAddress, _tokenId);
+
         // TODO compute rewards
 
         string memory resourceType = "gold";
@@ -213,8 +225,14 @@ contract GatherRun is OwnableUpgradeable, PausableUpgradeable {
     function getLockedHomunculi(
         address _nftAddress,
         uint256 _tokenId
-    ) public view returns (LockedHomunculi memory) {
+    ) external view returns (LockedHomunculi memory) {
         return lockedHomunculi[_nftAddress][_tokenId];
+    }
+
+    function getUserLockedHomunculi(
+        address _user
+    ) external view returns (LockedNFT[] memory) {
+        return userLockedHomunculi[_user];
     }
 
     function pause() public onlyOwner {
@@ -226,4 +244,22 @@ contract GatherRun is OwnableUpgradeable, PausableUpgradeable {
     }
 
     // TODO ierc721receiver
+
+    function _removeLockedNFTFromUserList(
+        address _user,
+        address _nftAddress,
+        uint256 _tokenId
+    ) internal {
+        LockedNFT[] storage nftList = userLockedHomunculi[_user];
+        for (uint256 i = 0; i < nftList.length; i++) {
+            if (
+                nftList[i].nfAddress == _nftAddress &&
+                nftList[i].tokenId == _tokenId
+            ) {
+                nftList[i] = nftList[nftList.length - 1];
+                nftList.pop();
+                break;
+            }
+        }
+    }
 }
