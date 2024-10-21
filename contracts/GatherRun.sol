@@ -3,8 +3,7 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "hardhat/console.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract GatherRun is OwnableUpgradeable, PausableUpgradeable {
     uint256 public nextRunId;
@@ -16,11 +15,33 @@ contract GatherRun is OwnableUpgradeable, PausableUpgradeable {
         uint16 maxProbability;
     }
 
+    struct LockedHomunculi {
+        address owner;
+        uint256 unlockTime;
+        bool withdrawn;
+    }
+
     mapping(uint256 => uint256) public durations;
     mapping(uint256 => Drop[]) public drops;
+    mapping(address => bool) public acceptedNftAddresses;
+    mapping(address => mapping(uint256 => LockedHomunculi))
+        public lockedHomunculi;
 
     event RunCreated(uint256 runId, uint256 duration, Drop[] drops);
     event RunUpdated(uint256 runId, uint256 duration, Drop[] drops);
+    event ExpeditionStarted(
+        uint256 runId,
+        address nftAddress,
+        uint256 tokenId,
+        uint256 unlockTime
+    );
+    event HomunculusWithdrawn(
+        address owner,
+        address nftAddress,
+        uint256 tokenId,
+        string resourceType,
+        uint256 resourceAmount
+    );
 
     function initialize() public initializer {
         __Ownable_init(msg.sender);
@@ -117,10 +138,84 @@ contract GatherRun is OwnableUpgradeable, PausableUpgradeable {
         require(maxProbability >= 10000, "Last drop probability must be 10000");
     }
 
-    // startGatherRun - as user with nft
-    // sendAllEligibleToGather
-    // claimAllGatherRunRewards
-    // claimGatherRunRewards
+    function acceptNftAddress(address nftAddress) public onlyOwner {
+        acceptedNftAddresses[nftAddress] = true;
+    }
+
+    function removeNftAddress(address nftAddress) public onlyOwner {
+        delete acceptedNftAddresses[nftAddress];
+    }
+
+    function startExpedition(
+        uint256 _runId,
+        address _nftAddress,
+        uint256 _tokenId
+    ) public whenNotPaused {
+        require(_runId < nextRunId, "Run does not exist");
+        require(
+            acceptedNftAddresses[_nftAddress],
+            "NFT address not accepted for GatherRun"
+        );
+
+        IERC721 nftContract = IERC721(_nftAddress);
+        require(
+            nftContract.ownerOf(_tokenId) == msg.sender,
+            "Sender does not own the NFT"
+        );
+
+        nftContract.transferFrom(msg.sender, address(this), _tokenId);
+
+        uint256 unlockedTime = block.timestamp + durations[_runId];
+        lockedHomunculi[_nftAddress][_tokenId] = LockedHomunculi({
+            owner: msg.sender,
+            unlockTime: unlockedTime,
+            withdrawn: false
+        });
+
+        emit ExpeditionStarted(_runId, _nftAddress, _tokenId, unlockedTime);
+    }
+
+    function withdrawHomunculi(
+        address _nftAddress,
+        uint256 _tokenId
+    ) public whenNotPaused {
+        LockedHomunculi storage lockedHomunculus = lockedHomunculi[_nftAddress][
+            _tokenId
+        ];
+        require(
+            lockedHomunculus.owner == msg.sender,
+            "Sender does not own the homunculus"
+        );
+        require(
+            lockedHomunculus.unlockTime <= block.timestamp,
+            "Homunculus is still locked"
+        );
+
+        lockedHomunculus.withdrawn = true;
+
+        IERC721 nftContract = IERC721(_nftAddress);
+        nftContract.transferFrom(address(this), msg.sender, _tokenId);
+
+        // TODO compute rewards
+
+        string memory resourceType = "gold";
+        uint256 resourceAmount = 100;
+
+        emit HomunculusWithdrawn(
+            msg.sender,
+            _nftAddress,
+            _tokenId,
+            resourceType,
+            resourceAmount
+        );
+    }
+
+    function getLockedHomunculi(
+        address _nftAddress,
+        uint256 _tokenId
+    ) public view returns (LockedHomunculi memory) {
+        return lockedHomunculi[_nftAddress][_tokenId];
+    }
 
     function pause() public onlyOwner {
         _pause();
@@ -129,4 +224,6 @@ contract GatherRun is OwnableUpgradeable, PausableUpgradeable {
     function unpause() public onlyOwner {
         _unpause();
     }
+
+    // TODO ierc721receiver
 }

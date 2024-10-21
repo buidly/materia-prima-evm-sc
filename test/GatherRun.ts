@@ -154,7 +154,7 @@ describe("GatherRun", function () {
     });
   });
 
-  describe.only("Update Run", function () {
+  describe("Update Run", function () {
     beforeEach(async function () {
       const initialDrops = [
         {
