@@ -15,7 +15,7 @@ contract GatherRun is OwnableUpgradeable, PausableUpgradeable {
         uint16 maxProbability;
     }
 
-    struct LockedHomunculi {
+    struct LockedHomunculus {
         address owner;
         uint256 unlockTime;
         bool withdrawn;
@@ -24,12 +24,13 @@ contract GatherRun is OwnableUpgradeable, PausableUpgradeable {
     struct LockedNFT {
         address nfAddress;
         uint256 tokenId;
+        uint256 unlockTime;
     }
 
     mapping(uint256 => uint256) public durations;
     mapping(uint256 => Drop[]) public drops;
     mapping(address => bool) public acceptedNftAddresses;
-    mapping(address => mapping(uint256 => LockedHomunculi))
+    mapping(address => mapping(uint256 => LockedHomunculus))
         public lockedHomunculi;
     mapping(address => LockedNFT[]) public userLockedHomunculi;
 
@@ -171,27 +172,31 @@ contract GatherRun is OwnableUpgradeable, PausableUpgradeable {
 
         nftContract.transferFrom(msg.sender, address(this), _tokenId);
 
-        uint256 unlockedTime = block.timestamp + durations[_runId];
-        lockedHomunculi[_nftAddress][_tokenId] = LockedHomunculi({
+        uint256 unlockTime = block.timestamp + durations[_runId];
+        lockedHomunculi[_nftAddress][_tokenId] = LockedHomunculus({
             owner: msg.sender,
-            unlockTime: unlockedTime,
+            unlockTime: unlockTime,
             withdrawn: false
         });
 
         userLockedHomunculi[msg.sender].push(
-            LockedNFT({nfAddress: _nftAddress, tokenId: _tokenId})
+            LockedNFT({
+                nfAddress: _nftAddress,
+                tokenId: _tokenId,
+                unlockTime: unlockTime
+            })
         );
 
-        emit ExpeditionStarted(_runId, _nftAddress, _tokenId, unlockedTime);
+        emit ExpeditionStarted(_runId, _nftAddress, _tokenId, unlockTime);
     }
 
     function withdrawHomunculi(
         address _nftAddress,
         uint256 _tokenId
     ) public whenNotPaused {
-        LockedHomunculi storage lockedHomunculus = lockedHomunculi[_nftAddress][
-            _tokenId
-        ];
+        LockedHomunculus storage lockedHomunculus = lockedHomunculi[
+            _nftAddress
+        ][_tokenId];
         require(
             lockedHomunculus.owner == msg.sender,
             "Sender does not own the homunculus"
@@ -225,7 +230,7 @@ contract GatherRun is OwnableUpgradeable, PausableUpgradeable {
     function getLockedHomunculi(
         address _nftAddress,
         uint256 _tokenId
-    ) external view returns (LockedHomunculi memory) {
+    ) external view returns (LockedHomunculus memory) {
         return lockedHomunculi[_nftAddress][_tokenId];
     }
 
