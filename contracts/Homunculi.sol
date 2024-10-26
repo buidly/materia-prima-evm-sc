@@ -112,6 +112,11 @@ contract Homunculi is
         uint64 royalties,
         uint64 tier
     ) public onlyAdmin {
+        require(
+            bytes(nftDetails[id].name).length == 0,
+            "NFT details already set for this ID"
+        );
+
         nftDetails[id] = NftDetails({
             name: name,
             royalties: royalties,
@@ -122,6 +127,30 @@ contract Homunculi is
         });
         idLastMintedIndex[id] = 0;
         availableAssetsIds[id] = maxLen;
+    }
+
+    function updateNftDetails(
+        string memory id,
+        string memory name,
+        string memory collectionHash,
+        string[] memory tags,
+        string memory mediaType,
+        uint64 royalties,
+        uint64 tier
+    ) public onlyAdmin {
+        require(
+            bytes(nftDetails[id].name).length > 0,
+            "NFT details not set for this ID"
+        );
+
+        nftDetails[id] = NftDetails({
+            name: name,
+            royalties: royalties,
+            tier: tier,
+            mediaType: mediaType,
+            collectionHash: collectionHash,
+            tags: tags
+        });
     }
 
     function getTags(string memory id) public view returns (string[] memory) {

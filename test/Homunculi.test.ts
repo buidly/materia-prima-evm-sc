@@ -133,6 +133,115 @@ describe("Homunculi Contract", function () {
           )
       ).to.be.revertedWith("Access Control: sender is not Admin");
     });
+
+    it("should not allow setting NFT details for an existing NFT", async function () {
+      await homunculi.setNftDetails(NFT_DETAILS.nftId, NFT_DETAILS.name, NFT_DETAILS.collectionHash, NFT_DETAILS.tags, NFT_DETAILS.mediaType, NFT_DETAILS.maxLen, NFT_DETAILS.royalties, NFT_DETAILS.tier);
+
+      await expect(
+        homunculi.setNftDetails(
+          NFT_DETAILS.nftId,
+          NFT_DETAILS.name,
+          NFT_DETAILS.collectionHash,
+          NFT_DETAILS.tags,
+          NFT_DETAILS.mediaType,
+          NFT_DETAILS.maxLen,
+          NFT_DETAILS.royalties,
+          NFT_DETAILS.tier
+        )
+      ).to.be.revertedWith("NFT details already set for this ID");
+    });
+  });
+
+  describe("Update NFT Details", function () {
+    const NFT_DETAILS = {
+      nftId: "Branos",
+      name: "Branos",
+      collectionHash: "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
+      tags: ["MateriaPrima", "Homunculi", "Branos", "Laboratory", "Alchemist", "Arena"],
+      mediaType: "png",
+      maxLen: 2500,
+      royalties: 1000, // 10% in basis points
+      tier: 1,
+    }
+    const NEW_NFT_DETAILS = {
+      name: "New Branos",
+      collectionHash: "new collection hash",
+      tags: ["tag1", "tag2"],
+      mediaType: "extension",
+      royalties: 0,
+      tier: 2,
+    }
+
+    beforeEach(async function () {
+      await homunculi.setNftDetails(
+        NFT_DETAILS.nftId,
+        NFT_DETAILS.name,
+        NFT_DETAILS.collectionHash,
+        NFT_DETAILS.tags,
+        NFT_DETAILS.mediaType,
+        NFT_DETAILS.maxLen,
+        NFT_DETAILS.royalties,
+        NFT_DETAILS.tier
+      );
+    });
+
+    it("should allow updating NFT details", async function () {
+      await homunculi.updateNftDetails(
+        NFT_DETAILS.nftId,
+        NEW_NFT_DETAILS.name,
+        NEW_NFT_DETAILS.collectionHash,
+        NEW_NFT_DETAILS.tags,
+        NEW_NFT_DETAILS.mediaType,
+        NEW_NFT_DETAILS.royalties,
+        NEW_NFT_DETAILS.tier
+      );
+
+      const nftDetails = await homunculi.nftDetails(NFT_DETAILS.nftId);
+      expect(nftDetails.name).to.equal(NEW_NFT_DETAILS.name);
+      expect(nftDetails.royalties).to.equal(NEW_NFT_DETAILS.royalties);
+      expect(nftDetails.tier).to.equal(NEW_NFT_DETAILS.tier);
+      expect(nftDetails.mediaType).to.equal(NEW_NFT_DETAILS.mediaType);
+      expect(nftDetails.collectionHash).to.equal(NEW_NFT_DETAILS.collectionHash);
+
+      const tags = await homunculi.getTags(NFT_DETAILS.nftId);
+      expect(tags).to.deep.equal(NEW_NFT_DETAILS.tags);
+
+      const idLastMintedIndex = await homunculi.idLastMintedIndex(NFT_DETAILS.nftId);
+      expect(idLastMintedIndex).to.equal(0);
+
+      const availableAssetsIds = await homunculi.availableAssetsIds(NFT_DETAILS.nftId);
+      expect(availableAssetsIds).to.equal(NFT_DETAILS.maxLen);
+    });
+
+    it("should not allow non-admin to update NFT details", async function () {
+      await expect(
+        homunculi
+          .connect(otherWallet)
+          .updateNftDetails(
+            NFT_DETAILS.nftId,
+            NEW_NFT_DETAILS.name,
+            NEW_NFT_DETAILS.collectionHash,
+            NEW_NFT_DETAILS.tags,
+            NEW_NFT_DETAILS.mediaType,
+            NEW_NFT_DETAILS.royalties,
+            NEW_NFT_DETAILS.tier
+          )
+      ).to.be.revertedWith("Access Control: sender is not Admin");
+    });
+
+    it("should not allow updating NFT details for non-existent NFT", async function () {
+      await expect(
+        homunculi.updateNftDetails(
+          "NonExistentNFT",
+          NEW_NFT_DETAILS.name,
+          NEW_NFT_DETAILS.collectionHash,
+          NEW_NFT_DETAILS.tags,
+          NEW_NFT_DETAILS.mediaType,
+          NEW_NFT_DETAILS.royalties,
+          NEW_NFT_DETAILS.tier
+        )
+      ).to.be.revertedWith("NFT details not set for this ID");
+    });
   });
 
   // describe("Minting NFTs", function () {
