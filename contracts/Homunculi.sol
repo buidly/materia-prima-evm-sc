@@ -42,9 +42,9 @@ contract Homunculi is
     mapping(string => NftDetails) public nftDetails;
     mapping(string => uint256) public idLastMintedIndex;
     mapping(string => uint256) public availableAssetsIds;
-    mapping(string => mapping(uint256 => uint256)) private _etokenMatrix;
     mapping(string => uint256) public mintPrice;
-    mapping(uint256 => uint256) public experience;
+    // mapping(string => mapping(uint256 => uint256)) private _etokenMatrix;
+    // mapping(uint256 => uint256) public experience;
 
     /*============================ EVENTS ============================*/
     event NFTMinted(address indexed to, uint256 tokenId, string id);
@@ -155,6 +155,19 @@ contract Homunculi is
 
     function getTags(string memory id) public view returns (string[] memory) {
         return nftDetails[id].tags;
+    }
+
+    function setMintPrice(string memory id, uint256 price) public onlyAdmin {
+        require(
+            bytes(nftDetails[id].name).length > 0,
+            "NFT details not set for this ID"
+        );
+        mintPrice[id] = price;
+    }
+
+    // TODO: test after mint
+    function withdraw() public onlyAdmin {
+        payable(admin()).transfer(address(this).balance);
     }
 
     /*========================= PRIVATE API =========================*/
@@ -286,14 +299,6 @@ contract Homunculi is
     //     experience[tokenId] = newExperience;
 
     //     emit ExperienceUpdated(tokenId, newExperience);
-    // }
-
-    // function setMintPrice(string memory id, uint256 price) public onlyAdmin {
-    //     mintPrice[id] = price;
-    // }
-
-    // function withdraw() public onlyAdmin {
-    //     payable(owner()).transfer(address(this).balance);
     // }
 
     // function setSignerAddress(address _signerAddress) public onlyAdmin {

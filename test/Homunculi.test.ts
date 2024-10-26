@@ -13,11 +13,22 @@ describe("Homunculi Contract", function () {
     chainId = (await ethers.provider.getNetwork()).chainId;
   });
 
-  let homunculi: Homunculi;
+  let homunculi: Homunculi & { address: string };
   beforeEach(async function () {
     homunculi = await deployUpgradableContract(adminWallet, "Homunculi");
     await homunculi.unpause();
   });
+
+  const NFT_DETAILS = {
+    nftId: "Branos",
+    name: "Branos",
+    collectionHash: "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
+    tags: ["MateriaPrima", "Homunculi", "Branos", "Laboratory", "Alchemist", "Arena"],
+    mediaType: "png",
+    maxLen: 2500,
+    royalties: 1000, // 10% in basis points
+    tier: 1,
+  }
 
   describe("Deployment", function () {
     it("should creator as admin", async function () {
@@ -76,17 +87,6 @@ describe("Homunculi Contract", function () {
   });
 
   describe("Set NFT Details", function () {
-    const NFT_DETAILS = {
-      nftId: "Branos",
-      name: "Branos",
-      collectionHash: "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
-      tags: ["MateriaPrima", "Homunculi", "Branos", "Laboratory", "Alchemist", "Arena"],
-      mediaType: "png",
-      maxLen: 2500,
-      royalties: 1000, // 10% in basis points
-      tier: 1,
-    }
-
     it("Should allow the owner to set NFT details", async function () {
       await homunculi.setNftDetails(
         NFT_DETAILS.nftId,
@@ -153,16 +153,6 @@ describe("Homunculi Contract", function () {
   });
 
   describe("Update NFT Details", function () {
-    const NFT_DETAILS = {
-      nftId: "Branos",
-      name: "Branos",
-      collectionHash: "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
-      tags: ["MateriaPrima", "Homunculi", "Branos", "Laboratory", "Alchemist", "Arena"],
-      mediaType: "png",
-      maxLen: 2500,
-      royalties: 1000, // 10% in basis points
-      tier: 1,
-    }
     const NEW_NFT_DETAILS = {
       name: "New Branos",
       collectionHash: "new collection hash",
@@ -240,6 +230,43 @@ describe("Homunculi Contract", function () {
           NEW_NFT_DETAILS.royalties,
           NEW_NFT_DETAILS.tier
         )
+      ).to.be.revertedWith("NFT details not set for this ID");
+    });
+  });
+
+  describe("Set Mint Price", function () {
+    beforeEach(async function () {
+      await homunculi.setNftDetails(
+        NFT_DETAILS.nftId,
+        NFT_DETAILS.name,
+        NFT_DETAILS.collectionHash,
+        NFT_DETAILS.tags,
+        NFT_DETAILS.mediaType,
+        NFT_DETAILS.maxLen,
+        NFT_DETAILS.royalties,
+        NFT_DETAILS.tier
+      );
+    });
+
+    it("should allow setting mint price", async function () {
+      const mintPrice = ethers.parseEther("0.25");
+      await homunculi.setMintPrice(NFT_DETAILS.nftId, mintPrice);
+
+      const price = await homunculi.mintPrice(NFT_DETAILS.nftId);
+      expect(price).to.equal(mintPrice);
+    });
+
+    it("should not allow non-admin to set mint price", async function () {
+      await expect(
+        homunculi
+          .connect(otherWallet)
+          .setMintPrice(NFT_DETAILS.nftId, ethers.parseEther("0.25"))
+      ).to.be.revertedWith("Access Control: sender is not Admin");
+    });
+
+    it("should not allow setting mint price for non-existent NFT", async function () {
+      await expect(
+        homunculi.setMintPrice("NonExistentNFT", ethers.parseEther("0.25"))
       ).to.be.revertedWith("NFT details not set for this ID");
     });
   });
