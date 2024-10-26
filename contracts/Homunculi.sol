@@ -22,6 +22,10 @@ contract Homunculi is
     struct NftDetails {
         string name;
         uint64 royalties;
+        uint64 tier;
+        string mediaType;
+        string collectionHash;
+        string[] tags;
     }
 
     /*========================= CONTRACT STATE =========================*/
@@ -36,13 +40,9 @@ contract Homunculi is
     uint256[10] private __gap;
 
     mapping(string => NftDetails) public nftDetails;
-    mapping(string => uint64) public nftTier;
     mapping(string => uint256) public idLastMintedIndex;
-    mapping(string => string[]) public tags;
-    mapping(string => string) public mediaType;
     mapping(string => uint256) public availableAssetsIds;
-    mapping(string => string) public collectionHash;
-    mapping(string => mapping(uint256 => uint256)) private _tokenMatrix;
+    mapping(string => mapping(uint256 => uint256)) private _etokenMatrix;
     mapping(string => uint256) public mintPrice;
     mapping(uint256 => uint256) public experience;
 
@@ -102,6 +102,32 @@ contract Homunculi is
         return super.tokenURI(tokenId);
     }
 
+    function setNftDetails(
+        string memory id,
+        string memory name,
+        string memory collectionHash,
+        string[] memory tags,
+        string memory mediaType,
+        uint256 maxLen,
+        uint64 royalties,
+        uint64 tier
+    ) public onlyAdmin {
+        nftDetails[id] = NftDetails({
+            name: name,
+            royalties: royalties,
+            tier: tier,
+            mediaType: mediaType,
+            collectionHash: collectionHash,
+            tags: tags
+        });
+        idLastMintedIndex[id] = 0;
+        availableAssetsIds[id] = maxLen;
+    }
+
+    function getTags(string memory id) public view returns (string[] memory) {
+        return nftDetails[id].tags;
+    }
+
     /*========================= PRIVATE API =========================*/
 
     /**
@@ -133,24 +159,6 @@ contract Homunculi is
     {
         return super._update(to, tokenId, auth);
     }
-    // function setNftDetails(
-    //     string memory id,
-    //     string memory name,
-    //     string memory _collectionHash,
-    //     string[] memory _tags,
-    //     string memory _mediaType,
-    //     uint256 maxLen,
-    //     uint64 royalties,
-    //     uint64 tier
-    // ) public onlyAdmin {
-    //     nftDetails[id] = NftDetails({name: name, royalties: royalties});
-    //     nftTier[id] = tier;
-    //     idLastMintedIndex[id] = 0;
-    //     tags[id] = _tags;
-    //     mediaType[id] = _mediaType;
-    //     availableAssetsIds[id] = maxLen;
-    //     collectionHash[id] = _collectionHash;
-    // }
 
     // function mint(string memory id) public payable whenNotPaused {
     //     require(
@@ -222,10 +230,6 @@ contract Homunculi is
     //     } else {
     //         return index;
     //     }
-    // }
-
-    // function getTags(string memory id) public view returns (string[] memory) {
-    //     return tags[id];
     // }
 
     // function updateExperience(

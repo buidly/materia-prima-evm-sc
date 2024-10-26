@@ -19,79 +19,121 @@ describe("Homunculi Contract", function () {
     await homunculi.unpause();
   });
 
-  it("sets creator as admin", async function () {
-    expect(await homunculi.admin()).to.equal(adminWallet.address);
+  describe("Deployment", function () {
+    it("should creator as admin", async function () {
+      expect(await homunculi.admin()).to.equal(adminWallet.address);
+    });
   });
 
+  describe("Access Control", function () {
+    it("Should allow the admin to set a new admin", async function () {
+      await homunculi.transferAdmin(otherWallet.address);
+      expect(await homunculi.admin()).to.equal(otherWallet.address);
+    });
 
-  // describe("Deployment", function () {
-  //   it("Should set the right owner", async function () {
-  //     expect(await homunculi.owner()).to.equal(owner.address);
-  //   });
-  // });
+    it("Should not allow non-admin to set a new admin", async function () {
+      await expect(
+        homunculi.connect(otherWallet).transferAdmin(otherWallet.address)
+      ).to.be.revertedWith("Access Control: sender is not Admin");
+    });
 
-  // describe("Set NFT Details", function () {
-  //   it("Should allow the owner to set NFT details", async function () {
-  //     const nftId = "Branos";
-  //     const name = "Branos";
-  //     const collectionHash = "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4";
-  //     const tags = ["MateriaPrima", "Homunculi", "Branos", "Laboratory", "Alchemist", "Arena"];
-  //     const mediaType = "png";
-  //     const maxLen = 2500;
-  //     const royalties = 1000; // 10% in basis points
-  //     const tier = 1;
+    it("Should allow the admin to renounce admin", async function () {
+      await homunculi.renounceAdmin();
+      expect(await homunculi.admin()).to.equal(ethers.ZeroAddress);
+    });
 
-  //     await homunculi.setNftDetails(
-  //       nftId,
-  //       name,
-  //       collectionHash,
-  //       tags,
-  //       mediaType,
-  //       maxLen,
-  //       royalties,
-  //       tier
-  //     );
+    it("Should not allow non-admin to renounce admin", async function () {
+      await expect(
+        homunculi.connect(otherWallet).renounceAdmin()
+      ).to.be.revertedWith("Access Control: sender is not Admin");
+    });
+  });
 
-  //     const nftDetails = await homunculi.nftDetails(nftId);
-  //     expect(nftDetails.name).to.equal(name);
-  //     expect(nftDetails.royalties).to.equal(royalties);
+  describe("Pausing", function () {
+    it("Should allow the admin to pause the contract", async function () {
+      await homunculi.pause();
+      expect(await homunculi.paused()).to.be.true;
+    });
 
-  //     const nftTier = await homunculi.nftTier(nftId);
-  //     expect(nftTier).to.equal(tier);
+    it("Should allow the admin to unpause the contract", async function () {
+      await homunculi.pause();
+      await homunculi.unpause();
+      expect(await homunculi.paused()).to.be.false;
+    });
 
-  //     const idLastMintedIndex = await homunculi.idLastMintedIndex(nftId);
-  //     expect(idLastMintedIndex).to.equal(0);
+    it("Should not allow non-admin to pause the contract", async function () {
+      await expect(
+        homunculi.connect(otherWallet).pause()
+      ).to.be.revertedWith("Access Control: sender is not Admin");
+    });
 
-  //     const nftTags = await homunculi.getTags(nftId);
-  //     expect(nftTags).to.deep.equal(tags);
+    it("Should not allow non-admin to unpause the contract", async function () {
+      await homunculi.pause();
+      await expect(
+        homunculi.connect(otherWallet).unpause()
+      ).to.be.revertedWith("Access Control: sender is not Admin");
+    });
+  });
 
-  //     const nftMediaType = await homunculi.mediaType(nftId);
-  //     expect(nftMediaType).to.equal(mediaType);
+  describe("Set NFT Details", function () {
+    const NFT_DETAILS = {
+      nftId: "Branos",
+      name: "Branos",
+      collectionHash: "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
+      tags: ["MateriaPrima", "Homunculi", "Branos", "Laboratory", "Alchemist", "Arena"],
+      mediaType: "png",
+      maxLen: 2500,
+      royalties: 1000, // 10% in basis points
+      tier: 1,
+    }
 
-  //     const availableAssetsIds = await homunculi.availableAssetsIds(nftId);
-  //     expect(availableAssetsIds).to.equal(maxLen);
+    it("Should allow the owner to set NFT details", async function () {
+      await homunculi.setNftDetails(
+        NFT_DETAILS.nftId,
+        NFT_DETAILS.name,
+        NFT_DETAILS.collectionHash,
+        NFT_DETAILS.tags,
+        NFT_DETAILS.mediaType,
+        NFT_DETAILS.maxLen,
+        NFT_DETAILS.royalties,
+        NFT_DETAILS.tier
+      );
 
-  //     const collectionHashStored = await homunculi.collectionHash(nftId);
-  //     expect(collectionHashStored).to.equal(collectionHash);
-  //   });
+      const nftDetails = await homunculi.nftDetails(NFT_DETAILS.nftId);
+      expect(nftDetails.name).to.equal(NFT_DETAILS.name);
+      expect(nftDetails.royalties).to.equal(NFT_DETAILS.royalties);
+      expect(nftDetails.tier).to.equal(NFT_DETAILS.tier);
+      expect(nftDetails.mediaType).to.equal(NFT_DETAILS.mediaType);
+      expect(nftDetails.collectionHash).to.equal(NFT_DETAILS.collectionHash);
 
-  //   it("Should not allow non-owner to set NFT details", async function () {
-  //     await expect(
-  //       homunculi
-  //         .connect(addr1)
-  //         .setNftDetails(
-  //           "nft",
-  //           "NFT",
-  //           "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
-  //           ["item"],
-  //           "png",
-  //           2500,
-  //           1000,
-  //           2
-  //         )
-  //     ).to.be.revertedWithCustomError(homunculi, "OwnableUnauthorizedAccount");
-  //   });
-  // });
+      const tags = await homunculi.getTags(NFT_DETAILS.nftId);
+      expect(tags).to.deep.equal(tags);
+
+      const idLastMintedIndex = await homunculi.idLastMintedIndex(NFT_DETAILS.nftId);
+      expect(idLastMintedIndex).to.equal(0);
+
+      const availableAssetsIds = await homunculi.availableAssetsIds(NFT_DETAILS.nftId);
+      expect(availableAssetsIds).to.equal(NFT_DETAILS.maxLen);
+
+    });
+
+    it("should not allow non-admin to set NFT details", async function () {
+      await expect(
+        homunculi
+          .connect(otherWallet)
+          .setNftDetails(
+            NFT_DETAILS.nftId,
+            NFT_DETAILS.name,
+            NFT_DETAILS.collectionHash,
+            NFT_DETAILS.tags,
+            NFT_DETAILS.mediaType,
+            NFT_DETAILS.maxLen,
+            NFT_DETAILS.royalties,
+            NFT_DETAILS.tier
+          )
+      ).to.be.revertedWith("Access Control: sender is not Admin");
+    });
+  });
 
   // describe("Minting NFTs", function () {
   //   const nftId = "Branos";
