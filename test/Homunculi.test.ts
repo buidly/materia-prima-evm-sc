@@ -458,6 +458,31 @@ describe("Homunculi Contract", function () {
     //   });
   });
 
+  describe("Withdraw", function () {
+    it("should allow admin to withdraw funds", async function () {
+      const mintPrice = ethers.parseEther("0.25");
+      await homunculi.setNftDetails(
+        NFT_DETAILS.nftId,
+        NFT_DETAILS.name,
+        NFT_DETAILS.collectionHash,
+        NFT_DETAILS.tags,
+        NFT_DETAILS.mediaType,
+        NFT_DETAILS.maxLen,
+        NFT_DETAILS.royalties,
+        NFT_DETAILS.tier
+      );
+      await homunculi.setMintPrice(NFT_DETAILS.nftId, mintPrice);
+      await homunculi.connect(otherWallet).mint(NFT_DETAILS.nftId, { value: mintPrice });
+
+      const balanceBefore = await ethers.provider.getBalance(adminWallet.address);
+      await homunculi.withdraw();
+      const balanceAfter = await ethers.provider.getBalance(adminWallet.address);
+
+      expect(balanceAfter).to.be.gt(balanceBefore);
+      expect(balanceAfter).to.be.closeTo(balanceBefore + mintPrice, ethers.parseEther("0.0001"));
+    });
+  });
+
   // describe("Updating homunculi experience", function () {
   //   let domain: any;
   //   const types = {
