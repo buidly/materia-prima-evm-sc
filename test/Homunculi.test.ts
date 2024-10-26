@@ -3,6 +3,7 @@ import { ethers } from "hardhat";
 import { Homunculi } from "../typechain-types";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { deployUpgradableContract } from "./utils/deploy.utils";
+import { getCurrentBlockTimestamp, signUpdateExperienceData } from "./utils/homunculi.utils";
 
 describe("Homunculi Contract", function () {
   let chainId: bigint;
@@ -37,23 +38,23 @@ describe("Homunculi Contract", function () {
   });
 
   describe("Access Control", function () {
-    it("Should allow the admin to set a new admin", async function () {
+    it("should allow the admin to set a new admin", async function () {
       await homunculi.transferAdmin(otherWallet.address);
       expect(await homunculi.admin()).to.equal(otherWallet.address);
     });
 
-    it("Should not allow non-admin to set a new admin", async function () {
+    it("should not allow non-admin to set a new admin", async function () {
       await expect(
         homunculi.connect(otherWallet).transferAdmin(otherWallet.address)
       ).to.be.revertedWith("Access Control: sender is not Admin");
     });
 
-    it("Should allow the admin to renounce admin", async function () {
+    it("should allow the admin to renounce admin", async function () {
       await homunculi.renounceAdmin();
       expect(await homunculi.admin()).to.equal(ethers.ZeroAddress);
     });
 
-    it("Should not allow non-admin to renounce admin", async function () {
+    it("should not allow non-admin to renounce admin", async function () {
       await expect(
         homunculi.connect(otherWallet).renounceAdmin()
       ).to.be.revertedWith("Access Control: sender is not Admin");
@@ -61,24 +62,24 @@ describe("Homunculi Contract", function () {
   });
 
   describe("Pausing", function () {
-    it("Should allow the admin to pause the contract", async function () {
+    it("should allow the admin to pause the contract", async function () {
       await homunculi.pause();
       expect(await homunculi.paused()).to.be.true;
     });
 
-    it("Should allow the admin to unpause the contract", async function () {
+    it("should allow the admin to unpause the contract", async function () {
       await homunculi.pause();
       await homunculi.unpause();
       expect(await homunculi.paused()).to.be.false;
     });
 
-    it("Should not allow non-admin to pause the contract", async function () {
+    it("should not allow non-admin to pause the contract", async function () {
       await expect(
         homunculi.connect(otherWallet).pause()
       ).to.be.revertedWith("Access Control: sender is not Admin");
     });
 
-    it("Should not allow non-admin to unpause the contract", async function () {
+    it("should not allow non-admin to unpause the contract", async function () {
       await homunculi.pause();
       await expect(
         homunculi.connect(otherWallet).unpause()
@@ -87,7 +88,7 @@ describe("Homunculi Contract", function () {
   });
 
   describe("Set NFT Details", function () {
-    it("Should allow the owner to set NFT details", async function () {
+    it("should allow the owner to set NFT details", async function () {
       await homunculi.setNftDetails(
         NFT_DETAILS.nftId,
         NFT_DETAILS.name,
@@ -293,6 +294,7 @@ describe("Homunculi Contract", function () {
       expect(await homunculi.ownerOf(1)).to.equal(otherWallet.address);
       expect(await homunculi.totalSupply()).to.equal(1);
       expect(await homunculi.idLastMintedIndex(NFT_DETAILS.nftId)).to.equal(1);
+      expect(await homunculi.experience(1)).to.equal(0);
       expect(await ethers.provider.getBalance(homunculi.address)).to.equal(mintPrice);
     });
 
@@ -397,65 +399,6 @@ describe("Homunculi Contract", function () {
         }
       }
     }).timeout(180_000);
-
-    // it("Should allow users to mint tier 1 NFTs", async function () {
-    //   // const tokenId = 1;
-
-    //   // Verify ownership
-    //   // expect(await homunculi.ownerOf(tokenId)).to.equal(addr1.address);
-
-    //   // // Verify token URI
-    //   // const expectedTokenUriStart = "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4/Branos/";
-    //   // expect(await homunculi.tokenURI(tokenId)).to.be.a("string").and.satisfy((uri: string) => uri.includes(expectedTokenUriStart));
-    // });
-
-    //   it("Should not allow minting beyond available supply", async function () {
-    //     // Mint the maximum number of NFTs
-    //     await homunculi.connect(addr1).mint(nftId, { value: nftPrice });
-    //     await homunculi.connect(addr2).mint(nftId, { value: nftPrice });
-
-    //     // Attempt to mint beyond the limit
-    //     await expect(
-    //       homunculi.connect(addr1).mint(nftId)
-    //     ).to.be.revertedWith("No more NFTs available to mint for this ID");
-    //   });
-
-    //   it("Should not allow minting when the price is not set", async function () {
-    //     await homunculi.setMintPrice(nftId, 0);
-
-    //     await expect(
-    //       homunculi.connect(addr1).mint(nftId)
-    //     ).to.be.revertedWith("Mint price not set for this ID");
-    //   });
-
-    //   it("Should not allow minting with insufficient funds", async function () {
-    //     await expect(
-    //       homunculi.connect(addr1).mint(nftId, { value: ethers.parseEther("0.09") })
-    //     ).to.be.revertedWith("Insufficient funds to mint this NFT");
-    //   });
-
-    //   it("Should not allow minting with more funds than required", async function () {
-    //     await expect(
-    //       homunculi.connect(addr1).mint(nftId, { value: ethers.parseEther("0.10001") })
-    //     ).to.be.revertedWith("Insufficient funds to mint this NFT");
-    //   });
-
-    //   it("Should emit NFTMinted event on successful mint", async function () {
-    //     await expect(homunculi.connect(addr1).mint(nftId, { value: nftPrice }))
-    //       .to.emit(homunculi, "NFTMinted")
-    //       .withArgs(
-    //         addr1.address,
-    //         1,
-    //         nftId
-    //       );
-    //   });
-
-    //   it("Should not allow minting when paused", async function () {
-    //     await homunculi.pause();
-    //     await expect(
-    //       homunculi.connect(addr1).mint(nftId)
-    //     ).to.be.revertedWithCustomError(homunculi, "EnforcedPause");
-    //   });
   });
 
   describe("Withdraw", function () {
@@ -483,97 +426,184 @@ describe("Homunculi Contract", function () {
     });
   });
 
-  // describe("Updating homunculi experience", function () {
-  //   let domain: any;
-  //   const types = {
-  //     Experience: [
-  //       { name: "tokenId", type: "uint256" },
-  //       { name: "newExperience", type: "uint256" },
-  //       { name: "timestamp", type: "uint256" },
-  //     ],
-  //   };
+  describe("Updating homunculi experience", function () {
+    const mintPrice = ethers.parseEther("0.25");
 
-  //   beforeEach(async function () {
-  //     domain = {
-  //       name: "MPHomunculi",
-  //       version: "1",
-  //       chainId,
-  //       verifyingContract: homunculiAddress,
-  //     };
+    beforeEach(async function () {
+      await homunculi.setNftDetails(
+        NFT_DETAILS.nftId,
+        NFT_DETAILS.name,
+        NFT_DETAILS.collectionHash,
+        NFT_DETAILS.tags,
+        NFT_DETAILS.mediaType,
+        NFT_DETAILS.maxLen,
+        NFT_DETAILS.royalties,
+        NFT_DETAILS.tier
+      );
+      await homunculi.setMintPrice(NFT_DETAILS.nftId, mintPrice);
 
-  //     await homunculi.setNftDetails(
-  //       "Branos",
-  //       "Branos",
-  //       "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
-  //       ["MateriaPrima", "Homunculi", "Branos", "Laboratory", "Alchemist", "Arena"],
-  //       "png",
-  //       2, // maxLen
-  //       500,
-  //       1 // tier
-  //     );
+      await homunculi.connect(otherWallet).mint(NFT_DETAILS.nftId, { value: mintPrice });
 
-  //     await homunculi.setMintPrice("Branos", ethers.parseEther("0.1"));
+      await homunculi.setSignerAddress(adminWallet.address);
+    });
 
-  //     await homunculi.connect(addr1).mint("Branos", { value: ethers.parseEther("0.1") });
+    it("should allow NFT owner to update experience", async function () {
+      const timestamp = await getCurrentBlockTimestamp();
+      const data = {
+        tokenId: 1,
+        newExperience: 30,
+        timestamp,
+      };
+      const signature = await signUpdateExperienceData(adminWallet, chainId, homunculi.address, data);
 
-  //     await homunculi.setSignerAddress(owner.address);
-  //   });
+      await homunculi.connect(otherWallet).updateExperience(1, 30, timestamp, signature);
 
-  //   it("Should not allow non-owner to update experience", async function () {
-  //     const timestamp = Math.floor(Date.now() / 1000);
-  //     const value = {
-  //       tokenId: 1,
-  //       newExperience: 30,
-  //       timestamp,
-  //     };
-  //     const signature = await addr1.signTypedData(domain, types, value);
+      const experience = await homunculi.experience(1);
+      expect(experience).to.equal(30);
+    });
 
-  //     await expect(
-  //       homunculi.connect(addr1).updateExperience(1, 30, timestamp, signature)
-  //     ).to.be.revertedWith("Invalid signature");
-  //   });
+    it("should emit ExperienceUpdated event on successful update", async function () {
+      const timestamp = await getCurrentBlockTimestamp();
+      const data = {
+        tokenId: 1,
+        newExperience: 30,
+        timestamp,
+      };
+      const signature = await signUpdateExperienceData(adminWallet, chainId, homunculi.address, data);
 
-  //   it("Should allow owner to update experience", async function () {
-  //     const timestamp = Math.floor(Date.now() / 1000);
-  //     const value = {
-  //       tokenId: 1,
-  //       newExperience: 30,
-  //       timestamp,
-  //     };
-  //     const signature = await owner.signTypedData(domain, types, value);
+      await expect(homunculi.connect(otherWallet).updateExperience(1, 30, timestamp, signature))
+        .to.emit(homunculi, "ExperienceUpdated")
+        .withArgs(
+          1,
+          0,
+          30
+        );
+    });
 
-  //     await homunculi.updateExperience(1, 30, timestamp, signature);
+    it("should not allow updating experience of a non-existent token", async function () {
+      const timestamp = await getCurrentBlockTimestamp();
+      const data = {
+        tokenId: 2,
+        newExperience: 30,
+        timestamp,
+      };
+      const signature = await signUpdateExperienceData(adminWallet, chainId, homunculi.address, data);
 
-  //     const experience = await homunculi.experience(1);
-  //     expect(experience).to.equal(30);
-  //   });
+      await expect(
+        homunculi.connect(otherWallet).updateExperience(2, 30, timestamp, signature)
+      ).to.be.revertedWith("Token does not exist");
+    });
 
-  //   it("Should not allow updating experience for non-existent token", async function () {
-  //     const timestamp = Math.floor(Date.now() / 1000);
-  //     const value = {
-  //       tokenId: 2,
-  //       newExperience: 30,
-  //       timestamp,
-  //     };
-  //     const signature = await owner.signTypedData(domain, types, value);
+    it("should not allow non-owner to update experience", async function () {
+      const timestamp = await getCurrentBlockTimestamp();
+      const data = {
+        tokenId: 1,
+        newExperience: 30,
+        timestamp,
+      };
+      const signature = await signUpdateExperienceData(adminWallet, chainId, homunculi.address, data);
 
-  //     await expect(
-  //       homunculi.updateExperience(2, 30, timestamp, signature)
-  //     ).to.be.revertedWith("Token does not exist");
-  //   });
+      await expect(
+        homunculi.connect(adminWallet).updateExperience(1, 30, timestamp, signature)
+      ).to.be.revertedWith("Not the owner of this token");
+    });
 
-  //   it("Should not allow updating experience with an expired signature", async function () {
-  //     const timestamp = Math.floor(Date.now() / 1000) - 1000;
-  //     const value = {
-  //       tokenId: 1,
-  //       newExperience: 30,
-  //       timestamp,
-  //     };
-  //     const signature = await owner.signTypedData(domain, types, value);
+    it("should not allow updating experience if the signer address is not set", async function () {
+      await homunculi.setSignerAddress(ethers.ZeroAddress);
 
-  //     await expect(
-  //       homunculi.updateExperience(1, 30, timestamp, signature)
-  //     ).to.be.revertedWith("Signature expired");
-  //   });
-  // });
+      const timestamp = await getCurrentBlockTimestamp();
+      const data = {
+        tokenId: 1,
+        newExperience: 30,
+        timestamp,
+      };
+      const signature = await signUpdateExperienceData(adminWallet, chainId, homunculi.address, data);
+
+      await expect(
+        homunculi.connect(otherWallet).updateExperience(1, 30, timestamp, signature)
+      ).to.be.revertedWith("Signer address not set");
+    });
+
+    it("should not allow updating experience if the timestamp is in the past", async function () {
+      const currentBlockTimestamp = await getCurrentBlockTimestamp();
+
+      const timestamp = currentBlockTimestamp - 25;
+      const data = {
+        tokenId: 1,
+        newExperience: 30,
+        timestamp,
+      };
+      const signature = await signUpdateExperienceData(adminWallet, chainId, homunculi.address, data);
+
+      await expect(
+        homunculi.connect(otherWallet).updateExperience(1, 30, timestamp, signature)
+      ).to.be.revertedWith("Invalid timestamp");
+    });
+
+    it("should not allow updating experience if the timestamp is in the future", async function () {
+      const currentBlockTimestamp = await getCurrentBlockTimestamp();
+
+      const timestamp = currentBlockTimestamp + 85;
+      const data = {
+        tokenId: 1,
+        newExperience: 30,
+        timestamp,
+      };
+      const signature = await signUpdateExperienceData(adminWallet, chainId, homunculi.address, data);
+
+      await expect(
+        homunculi.connect(otherWallet).updateExperience(1, 30, timestamp, signature)
+      ).to.be.revertedWith("Signature expired");
+    });
+
+    it("should not allow updating experience with a lower value", async function () {
+      const timestamp = await getCurrentBlockTimestamp();
+
+      const oldSignature = await signUpdateExperienceData(adminWallet, chainId, homunculi.address, {
+        tokenId: 1,
+        newExperience: 30,
+        timestamp,
+      });
+      await homunculi.connect(otherWallet).updateExperience(1, 30, timestamp, oldSignature);
+
+      const data = {
+        tokenId: 1,
+        newExperience: 10,
+        timestamp,
+      };
+      const newSignature = await signUpdateExperienceData(adminWallet, chainId, homunculi.address, data);
+
+      await expect(
+        homunculi.connect(otherWallet).updateExperience(1, 10, timestamp, newSignature)
+      ).to.be.revertedWith("New experience is not greater than old experience");
+    });
+
+    it("should not allow updating experience with an invalid signature", async function () {
+      const timestamp = await getCurrentBlockTimestamp();
+      const data = {
+        tokenId: 1,
+        newExperience: 30,
+        timestamp,
+      };
+      const signature = await signUpdateExperienceData(otherWallet, chainId, homunculi.address, data);
+
+      await expect(
+        homunculi.connect(otherWallet).updateExperience(1, 30, timestamp, signature)
+      ).to.be.revertedWith("Invalid signature");
+    });
+
+    it("should not allow updating experience with different data", async function () {
+      const timestamp = await getCurrentBlockTimestamp();
+      const data = {
+        tokenId: 1,
+        newExperience: 30,
+        timestamp,
+      };
+      const signature = await signUpdateExperienceData(adminWallet, chainId, homunculi.address, data);
+
+      await expect(
+        homunculi.connect(otherWallet).updateExperience(1, 10, timestamp, signature)
+      ).to.be.revertedWith("Invalid signature");
+    });
+  });
 });

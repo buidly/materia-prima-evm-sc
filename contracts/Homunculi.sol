@@ -43,8 +43,8 @@ contract Homunculi is
     mapping(string => uint256) public idLastMintedIndex;
     mapping(string => uint256) public maximumSupply;
     mapping(string => uint256) public mintPrice;
+    mapping(uint256 => uint256) public experience;
     mapping(string => mapping(uint256 => uint256)) private _availableAssets;
-    // mapping(uint256 => uint256) public experience;
 
     /*============================ EVENTS ============================*/
     event NFTMinted(address indexed to, uint256 tokenId, string id);
@@ -63,6 +63,7 @@ contract Homunculi is
     }
 
     function __Homunculi__init_unchained() internal onlyInitializing {
+        signerAddress = address(0);
         DOMAIN_SEPARATOR = keccak256(
             abi.encode(
                 keccak256(
@@ -200,15 +201,52 @@ contract Homunculi is
 
         _setTokenURI(tokenId, tokenUri);
 
-        // experience[tokenId] = 0;
+        experience[tokenId] = 0;
         idLastMintedIndex[id]++;
 
         emit NFTMinted(msg.sender, tokenId, id);
     }
 
-    // TODO: test after mint
     function withdraw() public onlyAdmin {
         payable(admin()).transfer(address(this).balance);
+    }
+
+    function setSignerAddress(address _signerAddress) public onlyAdmin {
+        signerAddress = _signerAddress;
+    }
+
+    function updateExperience(
+        uint256 tokenId,
+        uint256 newExperience,
+        uint256 timestamp,
+        bytes memory signature
+    ) public whenNotPaused {
+        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        require(_ownerOf(tokenId) == msg.sender, "Not the owner of this token");
+        require(signerAddress != address(0), "Signer address not set");
+        require(timestamp >= block.timestamp - 20, "Invalid timestamp");
+        require(timestamp <= block.timestamp + 80, "Signature expired");
+
+        uint256 oldExperience = experience[tokenId];
+        require(
+            newExperience > experience[tokenId],
+            "New experience is not greater than old experience"
+        );
+
+        bytes32 structHash = keccak256(
+            abi.encode(EXPERIENCE_TYPEHASH, tokenId, newExperience, timestamp)
+        );
+        bytes32 digest = keccak256(
+            abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash)
+        );
+
+        address recoveredAddress = ECDSA.recover(digest, signature);
+
+        require(recoveredAddress == signerAddress, "Invalid signature");
+
+        experience[tokenId] = newExperience;
+
+        emit ExperienceUpdated(tokenId, oldExperience, newExperience);
     }
 
     /*========================= PRIVATE API =========================*/
@@ -294,35 +332,4 @@ contract Homunculi is
         }
         return result;
     }
-
-    // function updateExperience(
-    //     uint256 tokenId,
-    //     uint256 newExperience,
-    //     uint256 timestamp,
-    //     bytes memory signature
-    // ) public {
-    //     require(_ownerOf(tokenId) != address(0), "Token does not exist");
-    //     require(signerAddress != address(0), "Signer address not set");
-    //     require(block.timestamp <= timestamp - 10, "Invalid timestamp");
-    //     require(block.timestamp <= timestamp + 80, "Signature expired");
-
-    //     bytes32 structHash = keccak256(
-    //         abi.encode(EXPERIENCE_TYPEHASH, tokenId, newExperience, timestamp)
-    //     );
-    //     bytes32 digest = keccak256(
-    //         abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash)
-    //     );
-
-    //     address recoveredAddress = ECDSA.recover(digest, signature);
-
-    //     require(recoveredAddress == signerAddress, "Invalid signature");
-
-    //     experience[tokenId] = newExperience;
-
-    //     emit ExperienceUpdated(tokenId, newExperience);
-    // }
-
-    // function setSignerAddress(address _signerAddress) public onlyAdmin {
-    //     signerAddress = _signerAddress;
-    // }
 }
