@@ -41,9 +41,9 @@ contract Homunculi is
 
     mapping(string => NftDetails) public nftDetails;
     mapping(string => uint256) public idLastMintedIndex;
-    mapping(string => uint256) public availableAssetsIds;
+    mapping(string => uint256) public maximumSupply;
     mapping(string => uint256) public mintPrice;
-    // mapping(string => mapping(uint256 => uint256)) private _etokenMatrix;
+    mapping(string => mapping(uint256 => uint256)) private _availableAssets;
     // mapping(uint256 => uint256) public experience;
 
     /*============================ EVENTS ============================*/
@@ -126,7 +126,7 @@ contract Homunculi is
             tags: tags
         });
         idLastMintedIndex[id] = 0;
-        availableAssetsIds[id] = maxLen;
+        maximumSupply[id] = maxLen;
     }
 
     function updateNftDetails(
@@ -163,6 +163,47 @@ contract Homunculi is
             "NFT details not set for this ID"
         );
         mintPrice[id] = price;
+    }
+
+    function mint(string memory id) public payable whenNotPaused {
+        require(
+            bytes(nftDetails[id].name).length > 0,
+            "NFT details not set for this ID"
+        );
+        require(
+            idLastMintedIndex[id] < maximumSupply[id],
+            "No more NFTs available to mint for this ID"
+        );
+        require(mintPrice[id] > 0, "Mint price not set for this ID");
+        require(
+            msg.value == mintPrice[id],
+            "Insufficient funds to mint this NFT"
+        );
+
+        uint256 assetIndex = _useRandomAvailableAsset(id);
+        uint256 tokenId = totalSupply() + 1;
+        _safeMint(msg.sender, tokenId);
+
+        // TODO set token uri
+        string memory tokenUri = string(
+            abi.encodePacked(
+                "https://ipfs.io/ipfs/",
+                nftDetails[id].collectionHash,
+                "/",
+                id,
+                "/",
+                Strings.toString(assetIndex),
+                ".",
+                nftDetails[id].mediaType
+            )
+        );
+
+        _setTokenURI(tokenId, tokenUri);
+
+        // experience[tokenId] = 0;
+        idLastMintedIndex[id]++;
+
+        emit NFTMinted(msg.sender, tokenId, id);
     }
 
     // TODO: test after mint
@@ -202,77 +243,57 @@ contract Homunculi is
         return super._update(to, tokenId, auth);
     }
 
-    // function mint(string memory id) public payable whenNotPaused {
-    //     require(
-    //         bytes(nftDetails[id].name).length > 0,
-    //         "ID does not exist in the contract"
-    //     );
-    //     require(
-    //         idLastMintedIndex[id] < availableAssetsIds[id],
-    //         "No more NFTs available to mint for this ID"
-    //     );
-    //     require(mintPrice[id] > 0, "Mint price not set for this ID");
-    //     require(
-    //         msg.value == mintPrice[id],
-    //         "Insufficient funds to mint this NFT"
-    //     );
+    function _useRandomAvailableAsset(
+        string memory id
+    ) internal returns (uint256) {
+        uint256 randomNum = uint256(
+            keccak256(
+                abi.encode(
+                    msg.sender,
+                    tx.gasprice,
+                    block.number,
+                    block.timestamp,
+                    blockhash(block.number - 1),
+                    id
+                )
+            )
+        );
+        uint256 numAvailableTokens = maximumSupply[id] - idLastMintedIndex[id];
+        uint256 randomIndex = randomNum % numAvailableTokens;
 
-    //     uint256 remaining = availableAssetsIds[id] - idLastMintedIndex[id];
-    //     uint256 randomIndex = _getRandomNumber(remaining) + 1; // Adjusted to start from 1
-    //     uint256 assetIndex = _getAssetIndex(id, randomIndex);
+        return _useAvailableTokenAtIndex(id, randomIndex, numAvailableTokens);
+    }
 
-    //     // Update the token matrix
-    //     _tokenMatrix[id][randomIndex] = _getAssetIndex(id, remaining - 1);
+    function _useAvailableTokenAtIndex(
+        string memory id,
+        uint256 indexToUse,
+        uint256 numAvailableTokens
+    ) internal returns (uint256) {
+        uint256 valAtIndex = _availableAssets[id][indexToUse];
+        uint256 result;
+        if (valAtIndex == 0) {
+            // This means the index itself is still an available token
+            result = indexToUse;
+        } else {
+            // This means the index itself is not an available token, but the val at that index is.
+            result = valAtIndex;
+        }
 
-    //     uint256 tokenId = totalSupply() + 1;
-    //     _safeMint(msg.sender, tokenId);
-
-    //     string memory tokenUri = string(
-    //         abi.encodePacked(
-    //             "https://ipfs.io/ipfs/",
-    //             collectionHash[id],
-    //             "/",
-    //             id,
-    //             "/",
-    //             Strings.toString(assetIndex),
-    //             ".",
-    //             mediaType[id]
-    //         )
-    //     );
-
-    //     _setTokenURI(tokenId, tokenUri);
-
-    //     experience[tokenId] = 0;
-
-    //     idLastMintedIndex[id]++;
-
-    //     emit NFTMinted(msg.sender, tokenId, id);
-    // }
-
-    // function _getRandomNumber(uint256 upper) private view returns (uint256) {
-    //     // WARNING: This is not secure randomness
-    //     return
-    //         uint256(
-    //             keccak256(
-    //                 abi.encodePacked(
-    //                     block.timestamp,
-    //                     block.prevrandao,
-    //                     msg.sender
-    //                 )
-    //             )
-    //         ) % upper;
-    // }
-
-    // function _getAssetIndex(
-    //     string memory id,
-    //     uint256 index
-    // ) private view returns (uint256) {
-    //     if (_tokenMatrix[id][index] != 0) {
-    //         return _tokenMatrix[id][index];
-    //     } else {
-    //         return index;
-    //     }
-    // }
+        uint256 lastIndex = numAvailableTokens - 1;
+        if (indexToUse != lastIndex) {
+            // Replace the value at indexToUse, now that it's been used.
+            // Replace it with the data from the last index in the array, since we are going to decrease the array size afterwards.
+            uint256 lastValInArray = _availableAssets[id][lastIndex];
+            if (lastValInArray == 0) {
+                // This means the index itself is still an available token
+                _availableAssets[id][indexToUse] = lastIndex;
+            } else {
+                // This means the index itself is not an available token, but the val at that index is.
+                _availableAssets[id][indexToUse] = lastValInArray;
+            }
+        }
+        return result;
+    }
 
     // function updateExperience(
     //     uint256 tokenId,
@@ -303,32 +324,5 @@ contract Homunculi is
 
     // function setSignerAddress(address _signerAddress) public onlyAdmin {
     //     signerAddress = _signerAddress;
-    // }
-
-    // // Overrides required by Solidity
-    // function supportsInterface(
-    //     bytes4 interfaceId
-    // )
-    //     public
-    //     view
-    //     override(
-    //         ERC721Upgradeable,
-    //         ERC721EnumerableUpgradeable,
-    //         ERC721URIStorageUpgradeable
-    //     )
-    //     returns (bool)
-    // {
-    //     return super.supportsInterface(interfaceId);
-    // }
-
-    // function tokenURI(
-    //     uint256 tokenId
-    // )
-    //     public
-    //     view
-    //     override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
-    //     returns (string memory)
-    // {
-    //     return super.tokenURI(tokenId);
     // }
 }

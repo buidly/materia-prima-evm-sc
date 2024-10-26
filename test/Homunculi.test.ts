@@ -112,9 +112,8 @@ describe("Homunculi Contract", function () {
       const idLastMintedIndex = await homunculi.idLastMintedIndex(NFT_DETAILS.nftId);
       expect(idLastMintedIndex).to.equal(0);
 
-      const availableAssetsIds = await homunculi.availableAssetsIds(NFT_DETAILS.nftId);
-      expect(availableAssetsIds).to.equal(NFT_DETAILS.maxLen);
-
+      const maximumSupply = await homunculi.maximumSupply(NFT_DETAILS.nftId);
+      expect(maximumSupply).to.equal(NFT_DETAILS.maxLen);
     });
 
     it("should not allow non-admin to set NFT details", async function () {
@@ -199,8 +198,8 @@ describe("Homunculi Contract", function () {
       const idLastMintedIndex = await homunculi.idLastMintedIndex(NFT_DETAILS.nftId);
       expect(idLastMintedIndex).to.equal(0);
 
-      const availableAssetsIds = await homunculi.availableAssetsIds(NFT_DETAILS.nftId);
-      expect(availableAssetsIds).to.equal(NFT_DETAILS.maxLen);
+      const maximumSupply = await homunculi.maximumSupply(NFT_DETAILS.nftId);
+      expect(maximumSupply).to.equal(NFT_DETAILS.maxLen);
     });
 
     it("should not allow non-admin to update NFT details", async function () {
@@ -271,87 +270,193 @@ describe("Homunculi Contract", function () {
     });
   });
 
-  // describe("Minting NFTs", function () {
-  //   const nftId = "Branos";
-  //   const nftPrice = ethers.parseEther("0.1");
+  describe("Minting NFTs", function () {
+    const mintPrice = ethers.parseEther("0.25");
 
-  //   beforeEach(async function () {
-  //     // Set up an NFT with tier 1
-  //     await homunculi.setNftDetails(
-  //       nftId,
-  //       "Branos",
-  //       "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
-  //       ["MateriaPrima", "Homunculi", "Branos", "Laboratory", "Alchemist", "Arena"],
-  //       "png",
-  //       2, // maxLen
-  //       500,
-  //       1 // tier
-  //     );
+    beforeEach(async function () {
+      await homunculi.setNftDetails(
+        NFT_DETAILS.nftId,
+        NFT_DETAILS.name,
+        NFT_DETAILS.collectionHash,
+        NFT_DETAILS.tags,
+        NFT_DETAILS.mediaType,
+        NFT_DETAILS.maxLen,
+        NFT_DETAILS.royalties,
+        NFT_DETAILS.tier
+      );
+      await homunculi.setMintPrice(NFT_DETAILS.nftId, mintPrice);
+    });
 
-  //     await homunculi.setMintPrice(nftId, nftPrice);
-  //   });
+    it("should allow users to mint NFTs", async function () {
+      await homunculi.connect(otherWallet).mint(NFT_DETAILS.nftId, { value: mintPrice });
 
-  //   it("Should allow users to mint tier 1 NFTs", async function () {
-  //     await homunculi.connect(addr1).mint(nftId, { value: nftPrice });
+      expect(await homunculi.ownerOf(1)).to.equal(otherWallet.address);
+      expect(await homunculi.totalSupply()).to.equal(1);
+      expect(await homunculi.idLastMintedIndex(NFT_DETAILS.nftId)).to.equal(1);
+      expect(await ethers.provider.getBalance(homunculi.address)).to.equal(mintPrice);
+    });
 
-  //     const tokenId = 1;
+    it("should not allow non-existent NFT to be minted", async function () {
+      await expect(
+        homunculi.connect(otherWallet).mint("NonExistentNFT", { value: mintPrice })
+      ).to.be.revertedWith("NFT details not set for this ID");
+    });
 
-  //     // Verify ownership
-  //     expect(await homunculi.ownerOf(tokenId)).to.equal(addr1.address);
+    it("should not allow minting when paused", async function () {
+      await homunculi.pause();
+      await expect(
+        homunculi.connect(otherWallet).mint(NFT_DETAILS.nftId, { value: mintPrice })
+      ).to.be.revertedWith("Pausable: paused");
+    });
 
-  //     // Verify token URI
-  //     const expectedTokenUriStart = "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4/Branos/";
-  //     expect(await homunculi.tokenURI(tokenId)).to.be.a("string").and.satisfy((uri: string) => uri.includes(expectedTokenUriStart));
-  //   });
+    it("should not allow minting with insufficient funds", async function () {
+      await expect(
+        homunculi.connect(otherWallet).mint(NFT_DETAILS.nftId, { value: ethers.parseEther("0.24") })
+      ).to.be.revertedWith("Insufficient funds to mint this NFT");
+    });
 
-  //   it("Should not allow minting beyond available supply", async function () {
-  //     // Mint the maximum number of NFTs
-  //     await homunculi.connect(addr1).mint(nftId, { value: nftPrice });
-  //     await homunculi.connect(addr2).mint(nftId, { value: nftPrice });
+    it("should not allow minting with more funds than required", async function () {
+      await expect(
+        homunculi.connect(otherWallet).mint(NFT_DETAILS.nftId, { value: ethers.parseEther("0.25001") })
+      ).to.be.revertedWith("Insufficient funds to mint this NFT");
+    });
 
-  //     // Attempt to mint beyond the limit
-  //     await expect(
-  //       homunculi.connect(addr1).mint(nftId)
-  //     ).to.be.revertedWith("No more NFTs available to mint for this ID");
-  //   });
+    it("should not allow minting if mint price is not set", async function () {
+      await homunculi.setMintPrice(NFT_DETAILS.nftId, 0);
 
-  //   it("Should not allow minting when the price is not set", async function () {
-  //     await homunculi.setMintPrice(nftId, 0);
+      await expect(
+        homunculi.connect(otherWallet).mint(NFT_DETAILS.nftId, { value: mintPrice })
+      ).to.be.revertedWith("Mint price not set for this ID");
+    });
 
-  //     await expect(
-  //       homunculi.connect(addr1).mint(nftId)
-  //     ).to.be.revertedWith("Mint price not set for this ID");
-  //   });
+    it("should not allow minting beyond available supply", async function () {
+      const newNftId = "NewNFT";
+      const maxSupply = 2;
+      await homunculi.setNftDetails(
+        newNftId,
+        NFT_DETAILS.name,
+        NFT_DETAILS.collectionHash,
+        NFT_DETAILS.tags,
+        NFT_DETAILS.mediaType,
+        maxSupply,
+        NFT_DETAILS.royalties,
+        NFT_DETAILS.tier
+      );
+      await homunculi.setMintPrice(newNftId, mintPrice);
 
-  //   it("Should not allow minting with insufficient funds", async function () {
-  //     await expect(
-  //       homunculi.connect(addr1).mint(nftId, { value: ethers.parseEther("0.09") })
-  //     ).to.be.revertedWith("Insufficient funds to mint this NFT");
-  //   });
+      await homunculi.connect(otherWallet).mint(newNftId, { value: mintPrice });
+      await homunculi.connect(otherWallet).mint(newNftId, { value: mintPrice });
 
-  //   it("Should not allow minting with more funds than required", async function () {
-  //     await expect(
-  //       homunculi.connect(addr1).mint(nftId, { value: ethers.parseEther("0.10001") })
-  //     ).to.be.revertedWith("Insufficient funds to mint this NFT");
-  //   });
+      await expect(
+        homunculi.connect(otherWallet).mint(newNftId, { value: mintPrice })
+      ).to.be.revertedWith("No more NFTs available to mint for this ID");
+    });
 
-  //   it("Should emit NFTMinted event on successful mint", async function () {
-  //     await expect(homunculi.connect(addr1).mint(nftId, { value: nftPrice }))
-  //       .to.emit(homunculi, "NFTMinted")
-  //       .withArgs(
-  //         addr1.address,
-  //         1,
-  //         nftId
-  //       );
-  //   });
+    it("should emit NFTMinted event on successful mint", async function () {
+      await expect(homunculi.connect(otherWallet).mint(NFT_DETAILS.nftId, { value: mintPrice }))
+        .to.emit(homunculi, "NFTMinted")
+        .withArgs(
+          otherWallet.address,
+          1,
+          NFT_DETAILS.nftId
+        );
+    });
 
-  //   it("Should not allow minting when paused", async function () {
-  //     await homunculi.pause();
-  //     await expect(
-  //       homunculi.connect(addr1).mint(nftId)
-  //     ).to.be.revertedWithCustomError(homunculi, "EnforcedPause");
-  //   });
-  // });
+    it.skip("should not allow minting the same asset twice", async function () {
+      const nftId = "TestNFT";
+      const mintPrice = ethers.parseEther("0.000001");
+      const maxSupply = 50_000;
+
+      await homunculi.setNftDetails(
+        nftId,
+        NFT_DETAILS.name,
+        NFT_DETAILS.collectionHash,
+        NFT_DETAILS.tags,
+        NFT_DETAILS.mediaType,
+        maxSupply,
+        NFT_DETAILS.royalties,
+        NFT_DETAILS.tier
+      );
+      await homunculi.setMintPrice(nftId, mintPrice);
+
+      const usedAssetIds = new Set<string>();
+      const batchSize = 250;
+      for (let i = 0; i < maxSupply; i += batchSize) {
+        const mintTransactions = await Promise.all(new Array(batchSize).fill(0).map((_, i) => homunculi.connect(otherWallet).mint(nftId, { value: mintPrice })));
+        await Promise.all(mintTransactions.map(mint => mint.wait()));
+
+        console.log(`Minted ${i + batchSize}/${maxSupply} NFTs`);
+
+        for (let tokenId = i + 1; tokenId <= i + batchSize; tokenId++) {
+          const tokenUri = await homunculi.tokenURI(tokenId);
+          const assetId = tokenUri.split("/").pop()?.replace(".png", "") as string;
+
+          expect(usedAssetIds.has(assetId), `Asset ID ${assetId} already used`).to.be.false;
+
+          usedAssetIds.add(assetId);
+        }
+      }
+    }).timeout(180_000);
+
+    // it("Should allow users to mint tier 1 NFTs", async function () {
+    //   // const tokenId = 1;
+
+    //   // Verify ownership
+    //   // expect(await homunculi.ownerOf(tokenId)).to.equal(addr1.address);
+
+    //   // // Verify token URI
+    //   // const expectedTokenUriStart = "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4/Branos/";
+    //   // expect(await homunculi.tokenURI(tokenId)).to.be.a("string").and.satisfy((uri: string) => uri.includes(expectedTokenUriStart));
+    // });
+
+    //   it("Should not allow minting beyond available supply", async function () {
+    //     // Mint the maximum number of NFTs
+    //     await homunculi.connect(addr1).mint(nftId, { value: nftPrice });
+    //     await homunculi.connect(addr2).mint(nftId, { value: nftPrice });
+
+    //     // Attempt to mint beyond the limit
+    //     await expect(
+    //       homunculi.connect(addr1).mint(nftId)
+    //     ).to.be.revertedWith("No more NFTs available to mint for this ID");
+    //   });
+
+    //   it("Should not allow minting when the price is not set", async function () {
+    //     await homunculi.setMintPrice(nftId, 0);
+
+    //     await expect(
+    //       homunculi.connect(addr1).mint(nftId)
+    //     ).to.be.revertedWith("Mint price not set for this ID");
+    //   });
+
+    //   it("Should not allow minting with insufficient funds", async function () {
+    //     await expect(
+    //       homunculi.connect(addr1).mint(nftId, { value: ethers.parseEther("0.09") })
+    //     ).to.be.revertedWith("Insufficient funds to mint this NFT");
+    //   });
+
+    //   it("Should not allow minting with more funds than required", async function () {
+    //     await expect(
+    //       homunculi.connect(addr1).mint(nftId, { value: ethers.parseEther("0.10001") })
+    //     ).to.be.revertedWith("Insufficient funds to mint this NFT");
+    //   });
+
+    //   it("Should emit NFTMinted event on successful mint", async function () {
+    //     await expect(homunculi.connect(addr1).mint(nftId, { value: nftPrice }))
+    //       .to.emit(homunculi, "NFTMinted")
+    //       .withArgs(
+    //         addr1.address,
+    //         1,
+    //         nftId
+    //       );
+    //   });
+
+    //   it("Should not allow minting when paused", async function () {
+    //     await homunculi.pause();
+    //     await expect(
+    //       homunculi.connect(addr1).mint(nftId)
+    //     ).to.be.revertedWithCustomError(homunculi, "EnforcedPause");
+    //   });
+  });
 
   // describe("Updating homunculi experience", function () {
   //   let domain: any;
