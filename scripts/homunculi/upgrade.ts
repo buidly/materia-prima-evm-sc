@@ -1,5 +1,5 @@
 import { ethers, upgrades } from "hardhat";
-import { HomunculiV2, HomunculiV2__factory } from "../typechain-types";
+import { HomunculiV2__factory } from "../../typechain-types";
 
 async function main() {
   const proxyAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";

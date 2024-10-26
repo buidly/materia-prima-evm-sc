@@ -1,7 +1,9 @@
 import { ethers, upgrades } from "hardhat";
-import { Homunculi, Homunculi__factory } from "../typechain-types";
+import { Homunculi, Homunculi__factory } from "../../typechain-types";
 
 async function main() {
+  const gasPrice = ethers.parseUnits("5", "gwei");
+
   const HomunculiFactory = (await ethers.getContractFactory("Homunculi")) as Homunculi__factory;
   console.log("Deploying Homunculi...");
 
@@ -11,7 +13,8 @@ async function main() {
   const homunculiAddress = await homunculi.getAddress();
   console.log("Homunculi deployed to:", homunculiAddress);
 
-  await homunculi.setNftDetails(
+  console.log("Setting NFT details for Branos");
+  let currentTx = await homunculi.setNftDetails(
     "Branos",
     "Branos",
     "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
@@ -20,11 +23,15 @@ async function main() {
     2500,
     1000,
     1
-  );
-  await homunculi.setMintPrice("Branos", ethers.parseEther("0.0001"));
+    , { gasPrice, gasLimit: 1000000 });
+  await currentTx.wait();
+
+  currentTx = await homunculi.setMintPrice("Branos", ethers.parseEther("0.0001"));
+  await currentTx.wait();
   console.log("NFT details set for Branos");
 
-  await homunculi.setNftDetails(
+  console.log("Setting NFT details for Glys");
+  currentTx = await homunculi.setNftDetails(
     "Glys",
     "Glys",
     "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
@@ -34,10 +41,18 @@ async function main() {
     1000,
     1
   );
-  await homunculi.setMintPrice("Glys", ethers.parseEther("0.0001"));
+  await currentTx.wait();
+
+  currentTx = await homunculi.setMintPrice("Glys", ethers.parseEther("0.0001"));
+  await currentTx.wait();
   console.log("NFT details set for Glys");
 
-  await homunculi.setSignerAddress("0x48Ff04a4F09562c0e5345234a06F6B02A3514aCf");
+  console.log("Setting signer address");
+  currentTx = await homunculi.setSignerAddress("0x48Ff04a4F09562c0e5345234a06F6B02A3514aCf");
+  await currentTx.wait();
+  console.log("Signer address set");
+
+  console.log("Deployed Homunculi");
 }
 
 main()
