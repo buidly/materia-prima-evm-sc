@@ -27,6 +27,8 @@ const updateSetupConfig = (network: string, key: string, value: any) => {
 }
 
 const getHomunculiContract = async (hre: HardhatRuntimeEnvironment) => {
+  console.log('Using RPC URL:', (hre.network.config as any).url);
+
   const [adminWallet] = await hre.ethers.getSigners();
   console.log("Admin Public Address: ", adminWallet.address);
 

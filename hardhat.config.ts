@@ -19,8 +19,20 @@ function getTaikoConfig(network: "hekla" | "mainnet"): NetworkUserConfig {
     hekla: 167009,
     mainnet: 1, // TODO: Change to mainnet
   };
+
+  const heklaRpcUrls = [
+    "https://taiko-hekla.gateway.tenderly.co",
+    "https://taiko-hekla.drpc.org",
+    "https://taiko-hekla-rpc.publicnode.com",
+    "https://rpc.hekla.taiko.xyz",
+    "https://taiko-hekla.blockpi.network/v1/rpc/public",
+    "https://rpc.ankr.com/taiko_hekla",
+    "https://taiko-hekla.4everland.org/v1/37fa9972c1b1cd5fab542c7bdd4cde2f",
+    "https://hekla.taiko.tools",
+  ];
+
   const rpcUrls = {
-    hekla: "https://rpc.hekla.taiko.xyz",
+    hekla: heklaRpcUrls[Math.floor(Math.random() * heklaRpcUrls.length)],
     mainnet: "https://rpc.hekla.taiko.xyz", // TODO: Change to mainnet
   };
 
