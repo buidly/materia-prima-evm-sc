@@ -431,8 +431,11 @@ describe("Homunculi Contract", function () {
 
         for (let tokenId = i + 1; tokenId <= i + batchSize; tokenId++) {
           const tokenUri = await homunculi.tokenURI(tokenId);
-          const assetId = tokenUri.split("/").pop()?.replace(".png", "") as string;
+          const decodedTokenUri = decodeTokenURIToJSON(tokenUri);
 
+          expect(decodedTokenUri.name).to.equal(`${NFT_DETAILS.name} #${tokenId}`);
+
+          const assetId = decodedTokenUri.image.split("/").pop().split(".")[0] as string;
           expect(usedAssetIds.has(assetId), `Asset ID ${assetId} already used`).to.be.false;
 
           usedAssetIds.add(assetId);
