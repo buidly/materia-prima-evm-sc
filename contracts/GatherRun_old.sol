@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-contract GatherRun is OwnableUpgradeable, PausableUpgradeable {
+contract GatherRun_old is OwnableUpgradeable, PausableUpgradeable {
     uint256 public nextRunId;
 
     struct Drop {
