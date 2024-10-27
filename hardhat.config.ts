@@ -27,7 +27,6 @@ function getTaikoConfig(network: "hekla" | "mainnet"): NetworkUserConfig {
     "https://rpc.hekla.taiko.xyz",
     "https://taiko-hekla.blockpi.network/v1/rpc/public",
     "https://rpc.ankr.com/taiko_hekla",
-    "https://taiko-hekla.4everland.org/v1/37fa9972c1b1cd5fab542c7bdd4cde2f",
     "https://hekla.taiko.tools",
   ];
 

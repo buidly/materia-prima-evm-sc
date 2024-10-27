@@ -1,9 +1,10 @@
 import "@nomicfoundation/hardhat-toolbox";
 import { getDeployOptions } from "./args/deployOptions";
-import { scope } from "hardhat/config";
+import { scope, types } from "hardhat/config";
 import fs from "fs";
 import { Homunculi } from "../typechain-types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { ErrorDecoder } from 'ethers-decode-error'
 
 const homunculiScope = scope("homunculi", "Homunculi contract tasks");
 
@@ -59,7 +60,7 @@ homunculiScope.task("deploy", "Deploys Homunculi contract")
 
 homunculiScope.task("upgrade", "Upgrades Homunculi contract")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
-  .setAction(async (taskArgs, hre) => {
+  .setAction(async (_, hre) => {
     const [adminWallet] = await hre.ethers.getSigners();
     console.log("Admin Public Address: ", adminWallet.address);
 
@@ -74,7 +75,7 @@ homunculiScope.task("upgrade", "Upgrades Homunculi contract")
   });
 
 homunculiScope.task("pause", "Pauses Homunculi contract")
-  .setAction(async (taskArgs, hre) => {
+  .setAction(async (_, hre) => {
     const homunculi = await getHomunculiContract(hre);
 
     const tx = await homunculi.pause();
@@ -83,7 +84,7 @@ homunculiScope.task("pause", "Pauses Homunculi contract")
   });
 
 homunculiScope.task("unpause", "Unpauses Homunculi contract")
-  .setAction(async (taskArgs, hre) => {
+  .setAction(async (_, hre) => {
     const homunculi = await getHomunculiContract(hre);
 
     const tx = await homunculi.unpause();
@@ -92,7 +93,7 @@ homunculiScope.task("unpause", "Unpauses Homunculi contract")
   });
 
 homunculiScope.task("withdraw", "Withdraws funds from Homunculi contract")
-  .setAction(async (taskArgs, hre) => {
+  .setAction(async (_, hre) => {
     const homunculi = await getHomunculiContract(hre);
 
     const tx = await homunculi.withdraw();
@@ -102,10 +103,10 @@ homunculiScope.task("withdraw", "Withdraws funds from Homunculi contract")
 
 homunculiScope.task("set-signer-address", "Sets the signer address for Homunculi contract")
   .addParam("address", "Signer address")
-  .setAction(async (taskArgs, hre) => {
+  .setAction(async ({ address }, hre) => {
     const homunculi = await getHomunculiContract(hre);
 
-    const tx = await homunculi.setSignerAddress(taskArgs.address);
+    const tx = await homunculi.setSignerAddress(address);
 
     console.log("Signer address set", tx.hash);
   });
@@ -152,4 +153,57 @@ homunculiScope.task("mint", "Mints a Homunculi NFT")
     const tx = await homunculi.mint(id, { value: mintPrice });
 
     console.log("Mint successful", tx.hash);
+  });
+
+homunculiScope.task("get-experience", "Gets the experience for a Homunculi NFT")
+  .addParam("tokenId", "Homunculi token ID", undefined, types.int)
+  .setAction(async ({ tokenId }, hre) => {
+    const homunculi = await getHomunculiContract(hre);
+
+    const experience = await homunculi.experience(tokenId);
+    console.log("Experience for token", tokenId, "is", experience);
+  });
+
+homunculiScope.task("update-experience", "Updates the experience for a Homunculi NFT")
+  .addParam("tokenId", "Homunculi token ID", undefined, types.int)
+  .addParam("newExperience", "New experience value", undefined, types.int)
+  .setAction(async ({ tokenId, newExperience }, hre) => {
+    const chainId = BigInt(hre.network.config.chainId!);
+    const [adminWallet] = await hre.ethers.getSigners();
+    const homunculi = await getHomunculiContract(hre);
+
+    const domain = {
+      name: "MPHomunculi",
+      version: "1",
+      chainId,
+      verifyingContract: homunculi.target.toString(),
+    };
+
+    const types = {
+      Experience: [
+        { name: "tokenId", type: "uint256" },
+        { name: "newExperience", type: "uint256" },
+        { name: "timestamp", type: "uint256" },
+      ],
+    };
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const data = {
+      tokenId,
+      newExperience,
+      timestamp,
+    };
+    const signature = await adminWallet.signTypedData(domain, types, data);
+
+    try {
+      const tx = await homunculi.updateExperience(tokenId, newExperience, timestamp, signature);
+
+      console.log("Experience updated", tx.hash);
+
+      await tx.wait();
+    } catch (error) {
+      const errorDecoder = ErrorDecoder.create()
+      const { reason } = await errorDecoder.decode(error)
+      console.log('Revert reason:', reason)
+    }
   });
