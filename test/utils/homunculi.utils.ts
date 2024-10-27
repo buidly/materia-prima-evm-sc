@@ -25,3 +25,9 @@ export const signUpdateExperienceData = async (signer: SignerWithAddress, chainI
   const signature = await signer.signTypedData(domain, types, data);
   return signature;
 };
+
+export const decodeTokenURIToJSON = (tokenURI: string): any => {
+  const encodedData = tokenURI.split("data:application/json;base64,")[1];
+  const decodedData = Buffer.from(encodedData, "base64").toString();
+  return JSON.parse(decodedData);
+}

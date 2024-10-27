@@ -5,17 +5,17 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/Base64.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "./lib/Pausable.sol";
 
 contract Homunculi is
     Initializable,
     ERC721Upgradeable,
     ERC721EnumerableUpgradeable,
-    ERC721URIStorageUpgradeable,
     Pausable
 {
     /*========================= STRUCTS =========================*/
@@ -44,6 +44,9 @@ contract Homunculi is
     mapping(string => uint256) public maximumSupply;
     mapping(string => uint256) public mintPrice;
     mapping(uint256 => uint256) public experience;
+    mapping(uint256 => string) private _tokenIdToNftId;
+    mapping(uint256 => uint256) private _tokenIdToNftIndex;
+    mapping(uint256 => uint256) private _tokenIdToAssetIndex;
     mapping(string => mapping(uint256 => uint256)) private _availableAssets;
 
     /*============================ EVENTS ============================*/
@@ -82,25 +85,45 @@ contract Homunculi is
     )
         public
         view
-        override(
-            ERC721Upgradeable,
-            ERC721EnumerableUpgradeable,
-            ERC721URIStorageUpgradeable
-        )
+        override(ERC721Upgradeable, ERC721EnumerableUpgradeable)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
     }
 
     function tokenURI(
-        uint256 tokenId
-    )
-        public
-        view
-        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
-        returns (string memory)
-    {
-        return super.tokenURI(tokenId);
+        uint256 _tokenId
+    ) public view override(ERC721Upgradeable) returns (string memory) {
+        require(_ownerOf(_tokenId) != address(0), "Token does not exist");
+
+        string memory id = _tokenIdToNftId[_tokenId];
+        uint256 index = _tokenIdToNftIndex[_tokenId];
+        NftDetails memory details = nftDetails[id];
+
+        string memory name = string.concat(
+            details.name,
+            " #",
+            Strings.toString(index)
+        );
+        string memory image = string.concat(
+            "ipfs://",
+            details.collectionHash,
+            "/",
+            id,
+            "/",
+            Strings.toString(_tokenIdToAssetIndex[_tokenId]),
+            ".",
+            details.mediaType
+        );
+
+        // Create the JSON metadata string
+        string memory json = Base64.encode(
+            bytes(
+                string.concat('{"name": "', name, '", "image": "', image, '"}')
+            )
+        );
+
+        return string(abi.encodePacked("data:application/json;base64,", json));
     }
 
     function setNftDetails(
@@ -183,26 +206,15 @@ contract Homunculi is
 
         uint256 assetIndex = _useRandomAvailableAsset(id);
         uint256 tokenId = totalSupply() + 1;
+
         _safeMint(msg.sender, tokenId);
-
-        // TODO set token uri
-        string memory tokenUri = string(
-            abi.encodePacked(
-                "https://ipfs.io/ipfs/",
-                nftDetails[id].collectionHash,
-                "/",
-                id,
-                "/",
-                Strings.toString(assetIndex),
-                ".",
-                nftDetails[id].mediaType
-            )
-        );
-
-        _setTokenURI(tokenId, tokenUri);
 
         experience[tokenId] = 0;
         idLastMintedIndex[id]++;
+
+        _tokenIdToNftId[tokenId] = id;
+        _tokenIdToAssetIndex[tokenId] = assetIndex;
+        _tokenIdToNftIndex[tokenId] = idLastMintedIndex[id];
 
         emit NFTMinted(msg.sender, tokenId, id);
     }

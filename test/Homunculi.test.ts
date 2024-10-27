@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { Homunculi } from "../typechain-types";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { deployUpgradableContract } from "./utils/deploy.utils";
-import { getCurrentBlockTimestamp, signUpdateExperienceData } from "./utils/homunculi.utils";
+import { decodeTokenURIToJSON, getCurrentBlockTimestamp, signUpdateExperienceData } from "./utils/homunculi.utils";
 
 describe("Homunculi Contract", function () {
   let chainId: bigint;
@@ -296,6 +296,13 @@ describe("Homunculi Contract", function () {
       expect(await homunculi.idLastMintedIndex(NFT_DETAILS.nftId)).to.equal(1);
       expect(await homunculi.experience(1)).to.equal(0);
       expect(await ethers.provider.getBalance(homunculi.address)).to.equal(mintPrice);
+
+      const tokenUri = await homunculi.tokenURI(1);
+      const decodedTokenUri = decodeTokenURIToJSON(tokenUri);
+
+      expect(decodedTokenUri.name).to.equal(`${NFT_DETAILS.name} #1`);
+      expect(decodedTokenUri.image.startsWith(`ipfs://${NFT_DETAILS.collectionHash}/${NFT_DETAILS.nftId}/`)).to.be.true;
+      expect(decodedTokenUri.image.endsWith(`.${NFT_DETAILS.mediaType}`)).to.be.true;
     });
 
     it("should not allow non-existent NFT to be minted", async function () {
@@ -362,6 +369,39 @@ describe("Homunculi Contract", function () {
           1,
           NFT_DETAILS.nftId
         );
+    });
+
+    it('should attribute consecutive names for each NFT id if they are minted in random order', async function () {
+      await homunculi.setNftDetails("Glys", "Glys", NFT_DETAILS.collectionHash, NFT_DETAILS.tags, NFT_DETAILS.mediaType, NFT_DETAILS.maxLen, NFT_DETAILS.royalties, NFT_DETAILS.tier);
+      await homunculi.setNftDetails("Limmex", "Limmex", NFT_DETAILS.collectionHash, NFT_DETAILS.tags, NFT_DETAILS.mediaType, NFT_DETAILS.maxLen, NFT_DETAILS.royalties, NFT_DETAILS.tier);
+
+      await homunculi.setMintPrice("Glys", mintPrice);
+      await homunculi.setMintPrice("Limmex", mintPrice);
+
+      await homunculi.connect(otherWallet).mint(NFT_DETAILS.nftId, { value: mintPrice });
+      await homunculi.connect(otherWallet).mint("Glys", { value: mintPrice });
+      await homunculi.connect(otherWallet).mint(NFT_DETAILS.nftId, { value: mintPrice });
+      await homunculi.connect(otherWallet).mint("Glys", { value: mintPrice });
+      await homunculi.connect(otherWallet).mint("Limmex", { value: mintPrice });
+      await homunculi.connect(otherWallet).mint("Limmex", { value: mintPrice });
+      await homunculi.connect(otherWallet).mint("Glys", { value: mintPrice });
+
+      const metadatas = await Promise.all(Array.from({ length: 7 }, (_, i) => homunculi.tokenURI(i + 1).then(decodeTokenURIToJSON)));
+
+      const branosNftMetadatas = metadatas.filter(metadata => metadata.name.startsWith("Branos"));
+      for (let i = 0; i < branosNftMetadatas.length; i++) {
+        expect(branosNftMetadatas[i].name).to.equal(`Branos #${i + 1}`);
+      }
+
+      const glysNftMetadatas = metadatas.filter(metadata => metadata.name.startsWith("Glys"));
+      for (let i = 0; i < glysNftMetadatas.length; i++) {
+        expect(glysNftMetadatas[i].name).to.equal(`Glys #${i + 1}`);
+      }
+
+      const limmexNftMetadatas = metadatas.filter(metadata => metadata.name.startsWith("Limmex"));
+      for (let i = 0; i < limmexNftMetadatas.length; i++) {
+        expect(limmexNftMetadatas[i].name).to.equal(`Limmex #${i + 1}`);
+      }
     });
 
     it.skip("should not allow minting the same asset twice", async function () {
