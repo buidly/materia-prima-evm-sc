@@ -1,0 +1,17 @@
+{
+  "nftId": "Glys",
+  "name": "Glys",
+  "collectionHash": "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
+  "tags": [
+    "MateriaPrima",
+    "Homunculi",
+    "Branos",
+    "Laboratory",
+    "Alchemist",
+    "Arena"
+  ],
+  "mediaType": "png",
+  "maxLen": 2500,
+  "royalties": 1000,
+  "tier": 1
+}
