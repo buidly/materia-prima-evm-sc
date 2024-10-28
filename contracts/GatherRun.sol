@@ -104,54 +104,6 @@ contract GatherRun is Initializable, Pausable {
         return drops[runId];
     }
 
-    /*========================= PRIVATE API =========================*/
-
-    function _checkDropProbabilities(Drop[] memory _drops) internal pure {
-        require(_drops.length > 0, "No drops provided");
-
-        uint256 minProbability = 10000;
-        uint256 maxProbability = 0;
-        uint16 expectedMinProbability = 0;
-
-        for (uint256 i = 0; i < _drops.length; i++) {
-            uint16 minProb = _drops[i].minProbability;
-            uint16 maxProb = _drops[i].maxProbability;
-
-            require(
-                minProb <= maxProb,
-                "minProbability cannot be greater than maxProbability"
-            );
-            require(
-                minProb >= 0 && minProb <= 10000,
-                "minProbability must be between 0 and 10000"
-            );
-            require(
-                maxProb >= 0 && maxProb <= 10000,
-                "maxProbability must be between 0 and 10000"
-            );
-            require(
-                minProb > 0 || maxProb > 0,
-                "Drop probabilities cannot both be zero"
-            );
-            require(
-                minProb == expectedMinProbability,
-                "Probability ranges must be sequential"
-            );
-
-            minProbability = minProbability < minProb
-                ? minProbability
-                : minProb;
-            maxProbability = maxProbability > maxProb
-                ? maxProbability
-                : maxProb;
-
-            expectedMinProbability = maxProb;
-        }
-
-        require(minProbability == 0, "First drop probability must be zero");
-        require(maxProbability >= 10000, "Last drop probability must be 10000");
-    }
-
     function acceptNftAddress(address nftAddress) public onlyAdmin {
         acceptedNftAddresses[nftAddress] = true;
     }
@@ -213,5 +165,53 @@ contract GatherRun is Initializable, Pausable {
             ];
         }
         return lockedHomunculiArray;
+    }
+
+    /*========================= PRIVATE API =========================*/
+
+    function _checkDropProbabilities(Drop[] memory _drops) internal pure {
+        require(_drops.length > 0, "No drops provided");
+
+        uint256 minProbability = 10000;
+        uint256 maxProbability = 0;
+        uint16 expectedMinProbability = 0;
+
+        for (uint256 i = 0; i < _drops.length; i++) {
+            uint16 minProb = _drops[i].minProbability;
+            uint16 maxProb = _drops[i].maxProbability;
+
+            require(
+                minProb <= maxProb,
+                "minProbability cannot be greater than maxProbability"
+            );
+            require(
+                minProb >= 0 && minProb <= 10000,
+                "minProbability must be between 0 and 10000"
+            );
+            require(
+                maxProb >= 0 && maxProb <= 10000,
+                "maxProbability must be between 0 and 10000"
+            );
+            require(
+                minProb > 0 || maxProb > 0,
+                "Drop probabilities cannot both be zero"
+            );
+            require(
+                minProb == expectedMinProbability,
+                "Probability ranges must be sequential"
+            );
+
+            minProbability = minProbability < minProb
+                ? minProbability
+                : minProb;
+            maxProbability = maxProbability > maxProb
+                ? maxProbability
+                : maxProb;
+
+            expectedMinProbability = maxProb;
+        }
+
+        require(minProbability == 0, "First drop probability must be zero");
+        require(maxProbability >= 10000, "Last drop probability must be 10000");
     }
 }
