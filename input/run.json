@@ -1,0 +1,23 @@
+{
+  "duration": 3600,
+  "drops": [
+    {
+      "resourceType": "FIRE_DUST",
+      "resourceAmount": 1,
+      "minProbability": 0,
+      "maxProbability": 3333
+    },
+    {
+      "resourceType": "WATER_DUST",
+      "resourceAmount": 2,
+      "minProbability": 3333,
+      "maxProbability": 6666
+    },
+    {
+      "resourceType": "EARTH_DUST",
+      "resourceAmount": 3,
+      "minProbability": 6666,
+      "maxProbability": 10000
+    }
+  ]
+}
