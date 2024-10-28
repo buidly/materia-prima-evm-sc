@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./lib/Pausable.sol";
 
 contract GatherRun is Initializable, Pausable {
@@ -14,6 +15,17 @@ contract GatherRun is Initializable, Pausable {
         uint16 maxProbability;
     }
 
+    struct LockedHomunculus {
+        address owner;
+        uint256 unlockTime;
+        bool withdrawn;
+    }
+
+    struct LockedNFT {
+        address nftAddress;
+        uint256 tokenId;
+    }
+
     /*========================= CONTRACT STATE =========================*/
 
     uint256 public nextRunId;
@@ -23,11 +35,21 @@ contract GatherRun is Initializable, Pausable {
 
     mapping(uint256 => uint256) public durations;
     mapping(uint256 => Drop[]) public drops;
+    mapping(address => bool) public acceptedNftAddresses;
+    mapping(address => mapping(uint256 => LockedHomunculus))
+        public lockedHomunculi;
+    mapping(address => LockedNFT[]) public userLockedNFTs;
 
     /*============================ EVENTS ============================*/
 
     event RunCreated(uint256 runId, uint256 duration, Drop[] drops);
     event RunUpdated(uint256 runId, uint256 duration, Drop[] drops);
+    event ExpeditionStarted(
+        uint256 runId,
+        address nftAddress,
+        uint256 tokenId,
+        uint256 unlockTime
+    );
 
     /*========================= PUBLIC API ===========================*/
 
@@ -128,5 +150,68 @@ contract GatherRun is Initializable, Pausable {
 
         require(minProbability == 0, "First drop probability must be zero");
         require(maxProbability >= 10000, "Last drop probability must be 10000");
+    }
+
+    function acceptNftAddress(address nftAddress) public onlyAdmin {
+        acceptedNftAddresses[nftAddress] = true;
+    }
+
+    function removeNftAddress(address nftAddress) public onlyAdmin {
+        delete acceptedNftAddresses[nftAddress];
+    }
+
+    function startExpedition(
+        uint256 _runId,
+        address _nftAddress,
+        uint256 _tokenId
+    ) public whenNotPaused {
+        require(_runId < nextRunId, "Run does not exist");
+        require(
+            acceptedNftAddresses[_nftAddress],
+            "NFT address not accepted for GatherRun"
+        );
+
+        IERC721 nftContract = IERC721(_nftAddress);
+        require(
+            nftContract.ownerOf(_tokenId) == msg.sender,
+            "Sender does not own the NFT"
+        );
+
+        nftContract.transferFrom(msg.sender, address(this), _tokenId);
+
+        uint256 unlockTime = block.timestamp + durations[_runId];
+        lockedHomunculi[_nftAddress][_tokenId] = LockedHomunculus({
+            owner: msg.sender,
+            unlockTime: unlockTime,
+            withdrawn: false
+        });
+
+        userLockedNFTs[msg.sender].push(
+            LockedNFT({nftAddress: _nftAddress, tokenId: _tokenId})
+        );
+
+        emit ExpeditionStarted(_runId, _nftAddress, _tokenId, unlockTime);
+    }
+
+    function getLockedHomunculi(
+        address _nftAddress,
+        uint256 _tokenId
+    ) external view returns (LockedHomunculus memory) {
+        return lockedHomunculi[_nftAddress][_tokenId];
+    }
+
+    function getUserLockedHomunculi(
+        address _user
+    ) external view returns (LockedHomunculus[] memory) {
+        LockedNFT[] memory userNFTs = userLockedNFTs[_user];
+        LockedHomunculus[] memory lockedHomunculiArray = new LockedHomunculus[](
+            userNFTs.length
+        );
+        for (uint256 i = 0; i < userNFTs.length; i++) {
+            lockedHomunculiArray[i] = lockedHomunculi[userNFTs[i].nftAddress][
+                userNFTs[i].tokenId
+            ];
+        }
+        return lockedHomunculiArray;
     }
 }
