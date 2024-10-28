@@ -368,6 +368,7 @@ describe("GatherRun Contract", function () {
       const transactionTimestamp = (await ethers.provider.getBlock(transaction.blockHash as string))!.timestamp;
 
       const lockedHomunculi = await gatherRun.getLockedHomunculi(homunculi.address, 1);
+      expect(lockedHomunculi.runId).to.equal(1);
       expect(lockedHomunculi.owner).to.equal(adminWallet.address);
       expect(lockedHomunculi.unlockTime).to.equal(transactionTimestamp + 3600);
       expect(lockedHomunculi.withdrawn).to.be.false;
@@ -409,6 +410,13 @@ describe("GatherRun Contract", function () {
         gatherRun.startExpedition(1, homunculi.address, 1)
       ).to.be.revertedWith("NFT address not accepted for GatherRun");
     });
+
+    it("should emit ExpeditionStarted event", async function () {
+      await homunculi.approve(gatherRun.address, 1);
+
+      expect(gatherRun.startExpedition(1, homunculi.address, 1))
+        .to.emit(gatherRun, "ExpeditionStarted")
+    });
   });
 
   describe("End expedition", function () {
@@ -446,7 +454,8 @@ describe("GatherRun Contract", function () {
       await ethers.provider.send("evm_increaseTime", [3600]);
       await ethers.provider.send("evm_mine");
 
-      await gatherRun.endExpedition(homunculi, 1);
+      const transaction = await gatherRun.endExpedition(homunculi, 1);
+      const receipt = await transaction.wait();
 
       const lockedHomunculi = await gatherRun.getLockedHomunculi(homunculi.address, 1);
       expect(lockedHomunculi.withdrawn).to.equal(true);
@@ -455,6 +464,10 @@ describe("GatherRun Contract", function () {
 
       const userLockedHomunculi = await gatherRun.getUserLockedHomunculi(adminWallet.address);
       expect(userLockedHomunculi.length).to.equal(0);
+
+      const endExpeditionEvent = (receipt?.logs[1] as any).args;
+      expect(endExpeditionEvent[3] as string).to.equal("FIRE_DUST");
+      expect(endExpeditionEvent[4] as bigint).to.equal(1);
     });
 
     it("should revert if the homunculus is still locked", async function () {
@@ -474,5 +487,59 @@ describe("GatherRun Contract", function () {
         gatherRun.connect(otherWallet).endExpedition(homunculi.address, 1)
       ).to.be.revertedWith("Sender does not own the NFT");
     });
+
+    it("should emit ExpeditionEnded event", async function () {
+      await homunculi.approve(gatherRun.address, 1);
+      await gatherRun.startExpedition(1, homunculi.address, 1);
+
+      await ethers.provider.send("evm_increaseTime", [3600]);
+      await ethers.provider.send("evm_mine");
+
+      expect(gatherRun.endExpedition(homunculi.address, 1))
+        .to.emit(gatherRun, "ExpeditionEnded")
+    });
+
+    it("should award the user with the correct resources", async function () {
+      const drops = [
+        {
+          resourceType: "FIRE_DUST",
+          resourceAmount: 1,
+          minProbability: 0,
+          maxProbability: 3333,
+        },
+        {
+          resourceType: "WATER_DUST",
+          resourceAmount: 2,
+          minProbability: 3333,
+          maxProbability: 6666,
+        },
+        {
+          resourceType: "EARTH_DUST",
+          resourceAmount: 3,
+          minProbability: 6666,
+          maxProbability: 10000,
+        },
+      ];
+      await gatherRun.createRun(3600, drops);
+
+      await homunculi.approve(gatherRun.address, 1);
+      await gatherRun.startExpedition(2, homunculi.address, 1);
+
+      await ethers.provider.send("evm_increaseTime", [3600]);
+      await ethers.provider.send("evm_mine");
+
+      const transaction = await gatherRun.endExpedition(homunculi, 1);
+      const receipt = await transaction.wait();
+
+      const endExpeditionEvent = (receipt?.logs[1] as any).args;
+      const resourceType = endExpeditionEvent[3] as string;
+      const resourceAmount = endExpeditionEvent[4] as bigint;
+
+      expect(resourceType).contain.oneOf(["FIRE_DUST", "WATER_DUST", "EARTH_DUST"]);
+
+      const expectedResourceAmount = drops.find((drop) => drop.resourceType === resourceType)!.resourceAmount;
+      expect(resourceAmount).to.equal(expectedResourceAmount);
+    });
+
   });
 });

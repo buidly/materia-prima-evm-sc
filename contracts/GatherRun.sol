@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./lib/Pausable.sol";
+import "hardhat/console.sol";
 
 contract GatherRun is Initializable, Pausable {
     /*========================= STRUCTS =========================*/
@@ -16,6 +17,7 @@ contract GatherRun is Initializable, Pausable {
     }
 
     struct LockedHomunculus {
+        uint256 runId;
         address owner;
         uint256 unlockTime;
         bool withdrawn;
@@ -140,6 +142,7 @@ contract GatherRun is Initializable, Pausable {
 
         uint256 unlockTime = block.timestamp + durations[_runId];
         lockedHomunculi[_nftAddress][_tokenId] = LockedHomunculus({
+            runId: _runId,
             owner: msg.sender,
             unlockTime: unlockTime,
             withdrawn: false
@@ -198,17 +201,18 @@ contract GatherRun is Initializable, Pausable {
 
         _removeLockedNFTFromUserList(msg.sender, _nftAddress, _tokenId);
 
-        // TODO compute rewards
-
-        string memory resourceType = "gold";
-        uint256 resourceAmount = 100;
+        uint256 randomNumber = _getRandomProbability();
+        Drop memory reward = _getDropByProbability(
+            lockedHomunculus.runId,
+            randomNumber
+        );
 
         emit ExpeditionEnded(
             msg.sender,
             _nftAddress,
             _tokenId,
-            resourceType,
-            resourceAmount
+            reward.resourceType,
+            reward.resourceAmount
         );
     }
 
@@ -276,5 +280,37 @@ contract GatherRun is Initializable, Pausable {
                 break;
             }
         }
+    }
+
+    function _getDropByProbability(
+        uint256 _runId,
+        uint256 probability
+    ) private view returns (Drop memory) {
+        Drop[] memory runDrops = drops[_runId];
+        for (uint256 i = 0; i < runDrops.length; i++) {
+            if (
+                probability >= runDrops[i].minProbability &&
+                probability < runDrops[i].maxProbability
+            ) {
+                return runDrops[i];
+            }
+        }
+        revert("No drop found");
+    }
+
+    function _getRandomProbability() private view returns (uint256) {
+        return
+            uint256(
+                keccak256(
+                    abi.encode(
+                        msg.sender,
+                        tx.gasprice,
+                        block.number,
+                        block.timestamp,
+                        blockhash(block.number - 1),
+                        nextRunId
+                    )
+                )
+            ) % 10000;
     }
 }
