@@ -50,6 +50,13 @@ contract GatherRun is Initializable, Pausable {
         uint256 tokenId,
         uint256 unlockTime
     );
+    event ExpeditionEnded(
+        address owner,
+        address nftAddress,
+        uint256 tokenId,
+        string resourceType,
+        uint256 resourceAmount
+    );
 
     /*========================= PUBLIC API ===========================*/
 
@@ -167,6 +174,44 @@ contract GatherRun is Initializable, Pausable {
         return lockedHomunculiArray;
     }
 
+    function endExpedition(
+        address _nftAddress,
+        uint256 _tokenId
+    ) public whenNotPaused {
+        LockedHomunculus storage lockedHomunculus = lockedHomunculi[
+            _nftAddress
+        ][_tokenId];
+
+        require(
+            lockedHomunculus.owner == msg.sender,
+            "Sender does not own the NFT"
+        );
+        require(
+            lockedHomunculus.unlockTime <= block.timestamp,
+            "Homunculus is still locked"
+        );
+
+        lockedHomunculus.withdrawn = true;
+
+        IERC721 nftContract = IERC721(_nftAddress);
+        nftContract.transferFrom(address(this), msg.sender, _tokenId);
+
+        _removeLockedNFTFromUserList(msg.sender, _nftAddress, _tokenId);
+
+        // TODO compute rewards
+
+        string memory resourceType = "gold";
+        uint256 resourceAmount = 100;
+
+        emit ExpeditionEnded(
+            msg.sender,
+            _nftAddress,
+            _tokenId,
+            resourceType,
+            resourceAmount
+        );
+    }
+
     /*========================= PRIVATE API =========================*/
 
     function _checkDropProbabilities(Drop[] memory _drops) internal pure {
@@ -213,5 +258,23 @@ contract GatherRun is Initializable, Pausable {
 
         require(minProbability == 0, "First drop probability must be zero");
         require(maxProbability >= 10000, "Last drop probability must be 10000");
+    }
+
+    function _removeLockedNFTFromUserList(
+        address _user,
+        address _nftAddress,
+        uint256 _tokenId
+    ) internal {
+        LockedNFT[] storage nftList = userLockedNFTs[_user];
+        for (uint256 i = 0; i < nftList.length; i++) {
+            if (
+                nftList[i].nftAddress == _nftAddress &&
+                nftList[i].tokenId == _tokenId
+            ) {
+                nftList[i] = nftList[nftList.length - 1];
+                nftList.pop();
+                break;
+            }
+        }
     }
 }

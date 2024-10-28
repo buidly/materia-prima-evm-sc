@@ -378,6 +378,101 @@ describe("GatherRun Contract", function () {
       const userLockedNFT = await gatherRun.userLockedNFTs(adminWallet.address, 0);
       expect(userLockedNFT.nftAddress).to.equal(homunculi.address);
       expect(userLockedNFT.tokenId).to.equal(1);
+
+      expect(await homunculi.ownerOf(1)).to.equal(gatherRun.address);
+    });
+
+    it("should revert if the user does not own the NFT", async function () {
+      await homunculi.approve(gatherRun.address, 1);
+      await expect(
+        gatherRun.connect(otherWallet).startExpedition(1, homunculi.address, 1)
+      ).to.be.revertedWith("Sender does not own the NFT");
+    });
+
+    it("should revert if the NFT is not approved", async function () {
+      await expect(
+        gatherRun.startExpedition(1, homunculi.address, 1)
+      ).to.be.rejected;
+    });
+
+    it("should revert if the run does not exist", async function () {
+      await homunculi.approve(gatherRun.address, 1);
+      await expect(
+        gatherRun.startExpedition(2, homunculi.address, 1)
+      ).to.be.revertedWith("Run does not exist");
+    });
+
+    it("should revert if the NFT address is not accepted", async function () {
+      await gatherRun.removeNftAddress(homunculi.address);
+      await homunculi.approve(gatherRun.address, 1);
+      await expect(
+        gatherRun.startExpedition(1, homunculi.address, 1)
+      ).to.be.revertedWith("NFT address not accepted for GatherRun");
+    });
+  });
+
+  describe("End expedition", function () {
+    beforeEach(async function () {
+      const initialDrops = [
+        {
+          resourceType: "FIRE_DUST",
+          resourceAmount: 1,
+          minProbability: 0,
+          maxProbability: 10000,
+        },
+      ];
+
+      await gatherRun.createRun(3600, initialDrops);
+      await gatherRun.acceptNftAddress(homunculi.address);
+
+      await homunculi.setNftDetails(
+        "Branos",
+        "Branos",
+        "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
+        ["MateriaPrima", "Homunculi", "Branos", "Laboratory", "Alchemist", "Arena"],
+        "png",
+        2500,
+        1000,
+        1,
+      );
+      await homunculi.setMintPrice("Branos", ethers.parseEther("0.1"));
+      await homunculi.mint("Branos", { value: ethers.parseEther("0.1") });
+    });
+
+    it("should allow a user to withdraw their homunculus after the expedition is over", async function () {
+      await homunculi.approve(gatherRun.address, 1);
+      await gatherRun.startExpedition(1, homunculi.address, 1);
+
+      await ethers.provider.send("evm_increaseTime", [3600]);
+      await ethers.provider.send("evm_mine");
+
+      await gatherRun.endExpedition(homunculi, 1);
+
+      const lockedHomunculi = await gatherRun.getLockedHomunculi(homunculi.address, 1);
+      expect(lockedHomunculi.withdrawn).to.equal(true);
+
+      expect(await homunculi.ownerOf(1)).to.equal(adminWallet.address);
+
+      const userLockedHomunculi = await gatherRun.getUserLockedHomunculi(adminWallet.address);
+      expect(userLockedHomunculi.length).to.equal(0);
+    });
+
+    it("should revert if the homunculus is still locked", async function () {
+      await homunculi.approve(gatherRun.address, 1);
+      await gatherRun.startExpedition(1, homunculi.address, 1);
+
+      await expect(
+        gatherRun.endExpedition(homunculi.address, 1)
+      ).to.be.revertedWith("Homunculus is still locked");
+    });
+
+    it("should revert if the user does not own the homunculus", async function () {
+      await homunculi.approve(gatherRun.address, 1);
+      await gatherRun.startExpedition(1, homunculi.address, 1);
+
+      await expect(
+        gatherRun.connect(otherWallet).endExpedition(homunculi.address, 1)
+      ).to.be.revertedWith("Sender does not own the NFT");
     });
   });
 });
