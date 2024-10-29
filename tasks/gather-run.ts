@@ -96,6 +96,59 @@ gatherRunScope.task("create-run", "Creates a new GatherRun")
     console.log("GatherRun created set", tx.hash);
   });
 
+gatherRunScope.task("create-locations", "Creates all GatherRun locations")
+  .addParam("input", "input file path")
+  .setAction(async ({ input }, hre) => {
+    const gatherRun = await getGatherRunContract(hre);
+
+    const locations = JSON.parse(fs.readFileSync(input, "utf8"));
+
+    console.log('-----')
+
+    const locationsSetup = [];
+    for (const location of locations) {
+      console.log(`Creating location ${location.title} with ${location.runs.length} runs`);
+
+      const receiptPromises: Promise<any>[] = [];
+      for (const run of location.runs) {
+        const duration = BigInt(run.durationInSeconds);
+        const drops = run.drop.map((drop: any) => ({
+          resourceType: drop.resource.type,
+          resourceAmount: drop.resource.quantity,
+          minProbability: BigInt(drop.minProbability * 10000),
+          maxProbability: BigInt(drop.maxProbability * 10000),
+        }));
+
+        const runTx = await gatherRun.createRun(duration, drops);
+
+        receiptPromises.push(runTx.wait());
+
+        console.log(`-- Creating run of duration ${run.durationInSeconds} with ${run.drop.length} drops. Tx: ${runTx.hash}`);
+      }
+
+      console.log(`-- Waiting for ${receiptPromises.length} run receipts`);
+
+      const receipts = await Promise.all(receiptPromises);
+
+      const runIds = [];
+      for (const receipt of receipts) {
+        const createdRunId = (receipt?.logs[0] as any).args[0] as bigint;
+        runIds.push(createdRunId);
+
+        console.log(`-- Run created with ID ${createdRunId}`);
+      }
+
+      locationsSetup.push({
+        title: location.title,
+        type: location.type,
+        runIds,
+      });
+    }
+
+    updateSetupConfig(hre.network.name, 'gather-run-locations', locationsSetup);
+  });
+
+
 gatherRunScope.task("start-expedition", "Starts a GatherRun")
   .addParam("runId", "Run ID")
   .addParam("tokenId", "Token ID")

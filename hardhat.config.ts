@@ -24,10 +24,9 @@ function getTaikoConfig(network: "hekla" | "mainnet"): NetworkUserConfig {
     "https://taiko-hekla.gateway.tenderly.co",
     "https://taiko-hekla.drpc.org",
     "https://taiko-hekla-rpc.publicnode.com",
-    "https://rpc.hekla.taiko.xyz",
-    "https://taiko-hekla.blockpi.network/v1/rpc/public",
     "https://rpc.ankr.com/taiko_hekla",
     "https://hekla.taiko.tools",
+    "https://taiko-hekla.blockpi.network/v1/rpc/public",
   ];
 
   const rpcUrls = {

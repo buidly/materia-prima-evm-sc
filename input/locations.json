@@ -1,0 +1,637 @@
+[
+   {
+      "title": "Luna Decrens",
+      "type": "AIR",
+      "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/gather-runs/gather-run-air-icon.jpg",
+      "imageWithElement": "https://buidly-space.fra1.cdn.digitaloceanspaces.com/materiaprima/gather-runs/gather-run-air-icon-element.jpg",
+      "description": "Majestic mountaintops that pierce the clouds, where the atmosphere is thin and the winds carry tales from distant lands. The high altitude makes it a prime location for capturing the essence of the air element.",
+      "runs": [
+         {
+            "durationInSeconds": "3600",
+            "drop": [
+               {
+                  "resource": {
+                     "type": "AIR_DUST",
+                     "quantity": 2,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/air-dust.jpg",
+                     "name": "Air Element Dust"
+                  },
+                  "minProbability": 0,
+                  "maxProbability": 0.50
+               },
+               {
+                  "resource": {
+                     "type": "AIR_DUST",
+                     "quantity": 3,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/air-dust.jpg",
+                     "name": "Air Element Dust"
+                  },
+                  "minProbability": 0.50,
+                  "maxProbability": 0.95
+               },
+               {
+                  "resource": {
+                     "type": "AIR_DUST",
+                     "quantity": 10,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/air-dust.jpg",
+                     "name": "Air Element Dust"
+                  },
+                  "minProbability": 0.95,
+                  "maxProbability": 1
+               }
+            ],
+            "avgDrop": 2.85
+         },
+         {
+            "durationInSeconds": "10800",
+            "drop": [
+               {
+                  "resource": {
+                     "type": "AIR_DUST",
+                     "quantity": 5,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/air-dust.jpg",
+                     "name": "Air Element Dust"
+                  },
+                  "minProbability": 0,
+                  "maxProbability": 0.50
+               },
+               {
+                  "resource": {
+                     "type": "AIR_DUST",
+                     "quantity": 3,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/air-dust.jpg",
+                     "name": "Air Element Dust"
+                  },
+                  "minProbability": 0.50,
+                  "maxProbability": 0.95
+               },
+               {
+                  "resource": {
+                     "type": "AIR_DUST",
+                     "quantity": 15,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/air-dust.jpg",
+                     "name": "Air Element Dust"
+                  },
+                  "minProbability": 0.95,
+                  "maxProbability": 1
+               }
+            ],
+            "avgDrop": 4.6
+         },
+         {
+            "durationInSeconds": "43200",
+            "drop": [
+               {
+                  "resource": {
+                     "type": "AIR_DUST",
+                     "quantity": 8,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/air-dust.jpg",
+                     "name": "Air Element Dust"
+                  },
+                  "minProbability": 0,
+                  "maxProbability": 0.10
+               },
+               {
+                  "resource": {
+                     "type": "AIR_DUST",
+                     "quantity": 10,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/air-dust.jpg",
+                     "name": "Air Element Dust"
+                  },
+                  "minProbability": 0.10,
+                  "maxProbability": 0.80
+               },
+               {
+                  "resource": {
+                     "type": "AIR_DUST",
+                     "quantity": 15,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/air-dust.jpg",
+                     "name": "Air Element Dust"
+                  },
+                  "minProbability": 0.80,
+                  "maxProbability": 0.95
+               },
+               {
+                  "resource": {
+                     "type": "AIR_DUST",
+                     "quantity": 35,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/air-dust.jpg",
+                     "name": "Air Element Dust"
+                  },
+                  "minProbability": 0.95,
+                  "maxProbability": 1
+               }
+            ],
+            "avgDrop": 11.8
+         }
+      ]
+   },
+   {
+      "title": "Therma Nymphae",
+      "type": "WATER",
+      "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/gather-runs/gather-run-water-icon.jpg",
+      "imageWithElement": "https://buidly-space.fra1.cdn.digitaloceanspaces.com/materiaprima/gather-runs/gather-run-water-icon-element.jpg",
+      "description": "A serene series of interconnected lagoons shimmering under the moonlight. The waters here are said to be enchanted, holding the purest essence of the water element.",
+      "runs": [
+         {
+            "durationInSeconds": "3600",
+            "drop": [
+               {
+                  "resource": {
+                     "type": "WATER_DUST",
+                     "quantity": 2,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/water-dust.jpg",
+                     "name": "Water Element Dust"
+                  },
+                  "minProbability": 0,
+                  "maxProbability": 0.50
+               },
+               {
+                  "resource": {
+                     "type": "WATER_DUST",
+                     "quantity": 3,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/water-dust.jpg",
+                     "name": "Water Element Dust"
+                  },
+                  "minProbability": 0.50,
+                  "maxProbability": 0.95
+               },
+               {
+                  "resource": {
+                     "type": "WATER_DUST",
+                     "quantity": 10,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/water-dust.jpg",
+                     "name": "Water Element Dust"
+                  },
+                  "minProbability": 0.95,
+                  "maxProbability": 1
+               }
+            ],
+            "avgDrop": 2.85
+         },
+         {
+            "durationInSeconds": "10800",
+            "drop": [
+               {
+                  "resource": {
+                     "type": "WATER_DUST",
+                     "quantity": 5,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/water-dust.jpg",
+                     "name": "Water Element Dust"
+                  },
+                  "minProbability": 0,
+                  "maxProbability": 0.50
+               },
+               {
+                  "resource": {
+                     "type": "WATER_DUST",
+                     "quantity": 3,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/water-dust.jpg",
+                     "name": "Water Element Dust"
+                  },
+                  "minProbability": 0.50,
+                  "maxProbability": 0.95
+               },
+               {
+                  "resource": {
+                     "type": "WATER_DUST",
+                     "quantity": 15,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/water-dust.jpg",
+                     "name": "Water Element Dust"
+                  },
+                  "minProbability": 0.95,
+                  "maxProbability": 1
+               }
+            ],
+            "avgDrop": 4.6
+         },
+         {
+            "durationInSeconds": "43200",
+            "drop": [
+               {
+                  "resource": {
+                     "type": "WATER_DUST",
+                     "quantity": 8,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/water-dust.jpg",
+                     "name": "Water Element Dust"
+                  },
+                  "minProbability": 0,
+                  "maxProbability": 0.10
+               },
+               {
+                  "resource": {
+                     "type": "WATER_DUST",
+                     "quantity": 10,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/water-dust.jpg",
+                     "name": "Water Element Dust"
+                  },
+                  "minProbability": 0.10,
+                  "maxProbability": 0.80
+               },
+               {
+                  "resource": {
+                     "type": "WATER_DUST",
+                     "quantity": 15,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/water-dust.jpg",
+                     "name": "Water Element Dust"
+                  },
+                  "minProbability": 0.80,
+                  "maxProbability": 0.95
+               },
+               {
+                  "resource": {
+                     "type": "WATER_DUST",
+                     "quantity": 35,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/water-dust.jpg",
+                     "name": "Water Element Dust"
+                  },
+                  "minProbability": 0.95,
+                  "maxProbability": 1
+               }
+            ],
+            "avgDrop": 11.8
+         }
+      ]
+   },
+   {
+      "title": "Arbor Corvo",
+      "type": "EARTH",
+      "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/gather-runs/gather-run-earth-icon.jpg",
+      "imageWithElement": "https://buidly-space.fra1.cdn.digitaloceanspaces.com/materiaprima/gather-runs/gather-run-earth-icon-element.jpg",
+      "description": "A vast expanse of ancient forests with trees that have deep roots touching the very core of Alka Sowa. The soil here is rich with the earth element, and rare minerals can be found scattered throughout.",
+      "runs": [
+         {
+            "durationInSeconds": "3600",
+            "drop": [
+               {
+                  "resource": {
+                     "type": "EARTH_DUST",
+                     "quantity": 2,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/earth-dust.jpg",
+                     "name": "Earth Element Dust"
+                  },
+                  "minProbability": 0,
+                  "maxProbability": 0.50
+               },
+               {
+                  "resource": {
+                     "type": "EARTH_DUST",
+                     "quantity": 3,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/earth-dust.jpg",
+                     "name": "Earth Element Dust"
+                  },
+                  "minProbability": 0.50,
+                  "maxProbability": 0.95
+               },
+               {
+                  "resource": {
+                     "type": "EARTH_DUST",
+                     "quantity": 10,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/earth-dust.jpg",
+                     "name": "Earth Element Dust"
+                  },
+                  "minProbability": 0.95,
+                  "maxProbability": 1
+               }
+            ],
+            "avgDrop": 2.85
+         },
+         {
+            "durationInSeconds": "10800",
+            "drop": [
+               {
+                  "resource": {
+                     "type": "EARTH_DUST",
+                     "quantity": 5,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/earth-dust.jpg",
+                     "name": "Earth Element Dust"
+                  },
+                  "minProbability": 0,
+                  "maxProbability": 0.50
+               },
+               {
+                  "resource": {
+                     "type": "EARTH_DUST",
+                     "quantity": 3,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/earth-dust.jpg",
+                     "name": "Earth Element Dust"
+                  },
+                  "minProbability": 0.50,
+                  "maxProbability": 0.95
+               },
+               {
+                  "resource": {
+                     "type": "EARTH_DUST",
+                     "quantity": 15,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/earth-dust.jpg",
+                     "name": "Earth Element Dust"
+                  },
+                  "minProbability": 0.95,
+                  "maxProbability": 1
+               }
+            ],
+            "avgDrop": 4.6
+         },
+         {
+            "durationInSeconds": "43200",
+            "drop": [
+               {
+                  "resource": {
+                     "type": "EARTH_DUST",
+                     "quantity": 8,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/earth-dust.jpg",
+                     "name": "Earth Element Dust"
+                  },
+                  "minProbability": 0,
+                  "maxProbability": 0.10
+               },
+               {
+                  "resource": {
+                     "type": "EARTH_DUST",
+                     "quantity": 10,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/earth-dust.jpg",
+                     "name": "Earth Element Dust"
+                  },
+                  "minProbability": 0.10,
+                  "maxProbability": 0.80
+               },
+               {
+                  "resource": {
+                     "type": "EARTH_DUST",
+                     "quantity": 15,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/earth-dust.jpg",
+                     "name": "Earth Element Dust"
+                  },
+                  "minProbability": 0.80,
+                  "maxProbability": 0.95
+               },
+               {
+                  "resource": {
+                     "type": "EARTH_DUST",
+                     "quantity": 35,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/earth-dust.jpg",
+                     "name": "Earth Element Dust"
+                  },
+                  "minProbability": 0.95,
+                  "maxProbability": 1
+               }
+            ],
+            "avgDrop": 11.8
+         }
+      ]
+   },
+   {
+      "title": "Gota Cruor",
+      "type": "FIRE",
+      "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/gather-runs/gather-run-fire-icon.jpg",
+      "imageWithElement": "https://buidly-space.fra1.cdn.digitaloceanspaces.com/materiaprima/gather-runs/gather-run-fire-icon-element.jpg",
+      "description": "It is also called the eternal eye. When it opens, the ground rumbles, the earth quakes and glowing lava pours down its slopes. His flames are believed to be the purest manifestation of the fire element in all of Alka Sowa.",
+      "runs": [
+         {
+            "durationInSeconds": "3600",
+            "drop": [
+               {
+                  "resource": {
+                     "type": "FIRE_DUST",
+                     "quantity": 2,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/fire-dust.jpg",
+                     "name": "Fire Element Dust"
+                  },
+                  "minProbability": 0,
+                  "maxProbability": 0.50
+               },
+               {
+                  "resource": {
+                     "type": "FIRE_DUST",
+                     "quantity": 3,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/fire-dust.jpg",
+                     "name": "Fire Element Dust"
+                  },
+                  "minProbability": 0.50,
+                  "maxProbability": 0.95
+               },
+               {
+                  "resource": {
+                     "type": "FIRE_DUST",
+                     "quantity": 10,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/fire-dust.jpg",
+                     "name": "Fire Element Dust"
+                  },
+                  "minProbability": 0.95,
+                  "maxProbability": 1
+               }
+            ],
+            "avgDrop": 2.85
+         },
+         {
+            "durationInSeconds": "10800",
+            "drop": [
+               {
+                  "resource": {
+                     "type": "FIRE_DUST",
+                     "quantity": 5,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/fire-dust.jpg",
+                     "name": "Fire Element Dust"
+                  },
+                  "minProbability": 0,
+                  "maxProbability": 0.50
+               },
+               {
+                  "resource": {
+                     "type": "FIRE_DUST",
+                     "quantity": 3,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/fire-dust.jpg",
+                     "name": "Fire Element Dust"
+                  },
+                  "minProbability": 0.50,
+                  "maxProbability": 0.95
+               },
+               {
+                  "resource": {
+                     "type": "FIRE_DUST",
+                     "quantity": 15,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/fire-dust.jpg",
+                     "name": "Fire Element Dust"
+                  },
+                  "minProbability": 0.95,
+                  "maxProbability": 1
+               }
+            ],
+            "avgDrop": 4.6
+         },
+         {
+            "durationInSeconds": "43200",
+            "drop": [
+               {
+                  "resource": {
+                     "type": "FIRE_DUST",
+                     "quantity": 8,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/fire-dust.jpg",
+                     "name": "Fire Element Dust"
+                  },
+                  "minProbability": 0,
+                  "maxProbability": 0.10
+               },
+               {
+                  "resource": {
+                     "type": "FIRE_DUST",
+                     "quantity": 10,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/fire-dust.jpg",
+                     "name": "Fire Element Dust"
+                  },
+                  "minProbability": 0.10,
+                  "maxProbability": 0.80
+               },
+               {
+                  "resource": {
+                     "type": "FIRE_DUST",
+                     "quantity": 15,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/fire-dust.jpg",
+                     "name": "Fire Element Dust"
+                  },
+                  "minProbability": 0.80,
+                  "maxProbability": 0.95
+               },
+               {
+                  "resource": {
+                     "type": "FIRE_DUST",
+                     "quantity": 35,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/fire-dust.jpg",
+                     "name": "Fire Element Dust"
+                  },
+                  "minProbability": 0.95,
+                  "maxProbability": 1
+               }
+            ],
+            "avgDrop": 11.8
+         }
+      ]
+   },
+   {
+      "title": "Gigas Ferreus",
+      "type": "IRON",
+      "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/gather-runs/gather-run-iron-icon.jpg",
+      "imageWithElement": "https://buidly-space.fra1.cdn.digitaloceanspaces.com/materiaprima/gather-runs/gather-run-iron-icon-element.jpg",
+      "description": "Beings of long-forgotten cultures have driven deep tunnels into the stone. The rocks are drenched with silvery veins and when you strike them, the pure iron in them begins to sing like a thousand choirs.",
+      "runs": [
+         {
+            "durationInSeconds": "3600",
+            "drop": [
+               {
+                  "resource": {
+                     "type": "IRON_DUST",
+                     "quantity": 2,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/iron-dust.jpg",
+                     "name": "Iron Element Dust"
+                  },
+                  "minProbability": 0,
+                  "maxProbability": 0.50
+               },
+               {
+                  "resource": {
+                     "type": "IRON_DUST",
+                     "quantity": 3,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/iron-dust.jpg",
+                     "name": "Iron Element Dust"
+                  },
+                  "minProbability": 0.50,
+                  "maxProbability": 0.95
+               },
+               {
+                  "resource": {
+                     "type": "IRON_DUST",
+                     "quantity": 10,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/iron-dust.jpg",
+                     "name": "Iron Element Dust"
+                  },
+                  "minProbability": 0.95,
+                  "maxProbability": 1
+               }
+            ],
+            "avgDrop": 2.85
+         },
+         {
+            "durationInSeconds": "10800",
+            "drop": [
+               {
+                  "resource": {
+                     "type": "IRON_DUST",
+                     "quantity": 5,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/iron-dust.jpg",
+                     "name": "Iron Element Dust"
+                  },
+                  "minProbability": 0,
+                  "maxProbability": 0.50
+               },
+               {
+                  "resource": {
+                     "type": "IRON_DUST",
+                     "quantity": 3,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/iron-dust.jpg",
+                     "name": "Iron Element Dust"
+                  },
+                  "minProbability": 0.50,
+                  "maxProbability": 0.95
+               },
+               {
+                  "resource": {
+                     "type": "IRON_DUST",
+                     "quantity": 15,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/iron-dust.jpg",
+                     "name": "Iron Element Dust"
+                  },
+                  "minProbability": 0.95,
+                  "maxProbability": 1
+               }
+            ],
+            "avgDrop": 4.6
+         },
+         {
+            "durationInSeconds": "43200",
+            "drop": [
+               {
+                  "resource": {
+                     "type": "IRON_DUST",
+                     "quantity": 8,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/iron-dust.jpg",
+                     "name": "Iron Element Dust"
+                  },
+                  "minProbability": 0,
+                  "maxProbability": 0.10
+               },
+               {
+                  "resource": {
+                     "type": "IRON_DUST",
+                     "quantity": 10,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/iron-dust.jpg",
+                     "name": "Iron Element Dust"
+                  },
+                  "minProbability": 0.10,
+                  "maxProbability": 0.80
+               },
+               {
+                  "resource": {
+                     "type": "IRON_DUST",
+                     "quantity": 15,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/iron-dust.jpg",
+                     "name": "Iron Element Dust"
+                  },
+                  "minProbability": 0.80,
+                  "maxProbability": 0.95
+               },
+               {
+                  "resource": {
+                     "type": "IRON_DUST",
+                     "quantity": 35,
+                     "image": "https://buidly-space.fra1.digitaloceanspaces.com/materiaprima/resources/iron-dust.jpg",
+                     "name": "Iron Element Dust"
+                  },
+                  "minProbability": 0.95,
+                  "maxProbability": 1
+               }
+            ],
+            "avgDrop": 11.8
+         }
+      ]
+   }
+]
