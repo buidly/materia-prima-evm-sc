@@ -570,7 +570,7 @@ describe("Homunculi Contract", function () {
     it("should not allow updating experience if the timestamp is in the past", async function () {
       const currentBlockTimestamp = await getCurrentBlockTimestamp();
 
-      const timestamp = currentBlockTimestamp - 25;
+      const timestamp = currentBlockTimestamp - 65;
       const data = {
         tokenId: 1,
         newExperience: 30,
@@ -586,7 +586,7 @@ describe("Homunculi Contract", function () {
     it("should not allow updating experience if the timestamp is in the future", async function () {
       const currentBlockTimestamp = await getCurrentBlockTimestamp();
 
-      const timestamp = currentBlockTimestamp + 85;
+      const timestamp = currentBlockTimestamp + 95;
       const data = {
         tokenId: 1,
         newExperience: 30,

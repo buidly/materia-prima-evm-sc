@@ -164,7 +164,7 @@ contract GatherRun is Initializable, Pausable {
 
     function getUserLockedHomunculi(
         address _user
-    ) external view returns (LockedHomunculus[] memory) {
+    ) external view returns (LockedNFT[] memory, LockedHomunculus[] memory) {
         LockedNFT[] memory userNFTs = userLockedNFTs[_user];
         LockedHomunculus[] memory lockedHomunculiArray = new LockedHomunculus[](
             userNFTs.length
@@ -174,7 +174,7 @@ contract GatherRun is Initializable, Pausable {
                 userNFTs[i].tokenId
             ];
         }
-        return lockedHomunculiArray;
+        return (userNFTs, lockedHomunculiArray);
     }
 
     function endExpedition(
