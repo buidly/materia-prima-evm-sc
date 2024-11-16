@@ -190,33 +190,17 @@ contract Homunculi is
     }
 
     function mint(string memory id) public payable whenNotPaused {
-        require(
-            bytes(nftDetails[id].name).length > 0,
-            "NFT details not set for this ID"
-        );
-        require(
-            idLastMintedIndex[id] < maximumSupply[id],
-            "No more NFTs available to mint for this ID"
-        );
         require(mintPrice[id] > 0, "Mint price not set for this ID");
         require(
             msg.value == mintPrice[id],
             "Insufficient funds to mint this NFT"
         );
 
-        uint256 assetIndex = _useRandomAvailableAsset(id);
-        uint256 tokenId = totalSupply() + 1;
+        _mintNft(id, msg.sender);
+    }
 
-        _safeMint(msg.sender, tokenId);
-
-        experience[tokenId] = 0;
-        idLastMintedIndex[id]++;
-
-        _tokenIdToNftId[tokenId] = id;
-        _tokenIdToAssetIndex[tokenId] = assetIndex;
-        _tokenIdToNftIndex[tokenId] = idLastMintedIndex[id];
-
-        emit NFTMinted(msg.sender, tokenId, id);
+    function freeMint(string memory id, address to) public onlyAdmin {
+        _mintNft(id, to);
     }
 
     function withdraw() public onlyAdmin {
@@ -236,8 +220,8 @@ contract Homunculi is
         require(_ownerOf(tokenId) != address(0), "Token does not exist");
         require(_ownerOf(tokenId) == msg.sender, "Not the owner of this token");
         require(signerAddress != address(0), "Signer address not set");
-        require(timestamp >= block.timestamp - 60, "Invalid timestamp");
-        require(timestamp <= block.timestamp + 90, "Signature expired");
+        require(timestamp >= block.timestamp - 120, "Invalid timestamp");
+        require(timestamp <= block.timestamp + 300, "Signature expired");
 
         uint256 oldExperience = experience[tokenId];
         require(
@@ -343,5 +327,30 @@ contract Homunculi is
             }
         }
         return result;
+    }
+
+    function _mintNft(string memory id, address to) internal {
+        require(
+            bytes(nftDetails[id].name).length > 0,
+            "NFT details not set for this ID"
+        );
+        require(
+            idLastMintedIndex[id] < maximumSupply[id],
+            "No more NFTs available to mint for this ID"
+        );
+
+        uint256 assetIndex = _useRandomAvailableAsset(id);
+        uint256 tokenId = totalSupply() + 1;
+
+        _safeMint(to, tokenId);
+
+        experience[tokenId] = 0;
+        idLastMintedIndex[id]++;
+
+        _tokenIdToNftId[tokenId] = id;
+        _tokenIdToAssetIndex[tokenId] = assetIndex;
+        _tokenIdToNftIndex[tokenId] = idLastMintedIndex[id];
+
+        emit NFTMinted(to, tokenId, id);
     }
 }
