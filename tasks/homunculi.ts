@@ -1,33 +1,15 @@
 import "@nomicfoundation/hardhat-toolbox";
 import { getDeployOptions } from "./args/deployOptions";
 import { scope, types } from "hardhat/config";
-import fs from "fs";
 import { Homunculi } from "../typechain-types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { ErrorDecoder } from 'ethers-decode-error'
+import { getSetupConfig, updateSetupConfig } from "./utils/config";
+import fs from "fs";
 
 const homunculiScope = scope("homunculi", "Homunculi contract tasks");
 
-const getSetupConfig = (network: string, key: string) => {
-  const filename = "setup.config.json";
-  const config = JSON.parse(fs.readFileSync(filename, "utf8"));
-  return config[network][key];
-}
-
-const updateSetupConfig = (network: string, key: string, value: any) => {
-  const filename = "setup.config.json";
-  const config = JSON.parse(fs.readFileSync(filename, "utf8"));
-
-  if (!config[network]) {
-    config[network] = {};
-  }
-
-  config[network][key] = value;
-
-  fs.writeFileSync(filename, JSON.stringify(config, null, 2));
-}
-
-const getHomunculiContract = async (hre: HardhatRuntimeEnvironment) => {
+export const getHomunculiContract = async (hre: HardhatRuntimeEnvironment) => {
   console.log('Using RPC URL:', (hre.network.config as any).url);
 
   const [adminWallet] = await hre.ethers.getSigners();
@@ -45,6 +27,8 @@ const getHomunculiContract = async (hre: HardhatRuntimeEnvironment) => {
 homunculiScope.task("deploy", "Deploys Homunculi contract")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
   .setAction(async (taskArgs, hre) => {
+    console.log('Using RPC URL:', (hre.network.config as any).url);
+
     const [adminWallet] = await hre.ethers.getSigners();
     console.log("Admin Public Address:", adminWallet.address);
 
@@ -61,6 +45,8 @@ homunculiScope.task("deploy", "Deploys Homunculi contract")
 homunculiScope.task("upgrade", "Upgrades Homunculi contract")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
   .setAction(async (_, hre) => {
+    console.log('Using RPC URL:', (hre.network.config as any).url);
+
     const [adminWallet] = await hre.ethers.getSigners();
     console.log("Admin Public Address: ", adminWallet.address);
 

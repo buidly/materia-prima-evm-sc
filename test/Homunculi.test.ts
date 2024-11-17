@@ -308,7 +308,7 @@ describe("Homunculi Contract", function () {
     it("should not allow non-existent NFT to be minted", async function () {
       await expect(
         homunculi.connect(otherWallet).mint("NonExistentNFT", { value: mintPrice })
-      ).to.be.revertedWith("NFT details not set for this ID");
+      ).to.be.revertedWith("Mint price not set for this ID");
     });
 
     it("should not allow minting when paused", async function () {
@@ -404,7 +404,7 @@ describe("Homunculi Contract", function () {
       }
     });
 
-    it.skip("should not allow minting the same asset twice", async function () {
+    it("should not allow minting the same asset twice", async function () {
       const nftId = "TestNFT";
       const mintPrice = ethers.parseEther("0.000001");
       const maxSupply = 50_000;
@@ -442,6 +442,29 @@ describe("Homunculi Contract", function () {
         }
       }
     }).timeout(180_000);
+
+    it("should allow admin to mint freeNFTs", async function () {
+      await homunculi.freeMint(NFT_DETAILS.nftId, otherWallet.address);
+
+      expect(await homunculi.ownerOf(1)).to.equal(otherWallet.address);
+      expect(await homunculi.totalSupply()).to.equal(1);
+      expect(await homunculi.idLastMintedIndex(NFT_DETAILS.nftId)).to.equal(1);
+      expect(await homunculi.experience(1)).to.equal(0);
+      expect(await ethers.provider.getBalance(homunculi.address)).to.equal(0);
+
+      const tokenUri = await homunculi.tokenURI(1);
+      const decodedTokenUri = decodeTokenURIToJSON(tokenUri);
+
+      expect(decodedTokenUri.name).to.equal(`${NFT_DETAILS.name} #1`);
+      expect(decodedTokenUri.image.startsWith(`ipfs://${NFT_DETAILS.collectionHash}/${NFT_DETAILS.nftId}/`)).to.be.true;
+      expect(decodedTokenUri.image.endsWith(`.${NFT_DETAILS.mediaType}`)).to.be.true;
+    });
+
+    it("should not allow non-admin to mint freeNFTs", async function () {
+      await expect(
+        homunculi.connect(otherWallet).freeMint(NFT_DETAILS.nftId, otherWallet.address)
+      ).to.be.revertedWith("Access Control: sender is not Admin");
+    });
   });
 
   describe("Withdraw", function () {
@@ -570,7 +593,7 @@ describe("Homunculi Contract", function () {
     it("should not allow updating experience if the timestamp is in the past", async function () {
       const currentBlockTimestamp = await getCurrentBlockTimestamp();
 
-      const timestamp = currentBlockTimestamp - 25;
+      const timestamp = currentBlockTimestamp - 121;
       const data = {
         tokenId: 1,
         newExperience: 30,
@@ -586,7 +609,7 @@ describe("Homunculi Contract", function () {
     it("should not allow updating experience if the timestamp is in the future", async function () {
       const currentBlockTimestamp = await getCurrentBlockTimestamp();
 
-      const timestamp = currentBlockTimestamp + 85;
+      const timestamp = currentBlockTimestamp + 305;
       const data = {
         tokenId: 1,
         newExperience: 30,
