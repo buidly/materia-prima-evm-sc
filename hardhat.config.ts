@@ -2,7 +2,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import '@openzeppelin/hardhat-upgrades';
 import dotenv from "dotenv";
-import "hardhat-gas-reporter";
+import "@nomicfoundation/hardhat-ledger";
 
 import "./tasks";
 import { NetworkUserConfig } from "hardhat/types";
@@ -18,7 +18,7 @@ const privateKey = `0x${process.env.PRIVATE_KEY}`;
 function getTaikoConfig(network: "hekla" | "mainnet"): NetworkUserConfig {
   const chainIds = {
     hekla: 167009,
-    mainnet: 1, // TODO: Change to mainnet
+    mainnet: 167000,
   };
 
   const heklaRpcUrls = [
@@ -32,13 +32,22 @@ function getTaikoConfig(network: "hekla" | "mainnet"): NetworkUserConfig {
 
   const rpcUrls = {
     hekla: heklaRpcUrls[Math.floor(Math.random() * heklaRpcUrls.length)],
-    mainnet: "https://rpc.hekla.taiko.xyz", // TODO: Change to mainnet
+    mainnet: "https://rpc.mainnet.taiko.xyz",
   };
+
+  const accounts = {
+    hekla: {
+      accounts: [privateKey],
+    },
+    mainnet: {
+      ledgerAccounts: [process.env.LEDGER_ACCOUNT] as string[],
+    },
+  }
 
   return {
     url: rpcUrls[network],
     chainId: chainIds[network],
-    accounts: [privateKey],
+    ...accounts[network],
   };
 }
 
@@ -55,10 +64,6 @@ const config: HardhatUserConfig = {
   networks: {
     hekla_taiko: getTaikoConfig("hekla"),
     mainnet_taiko: getTaikoConfig("mainnet"),
-  },
-  gasReporter: {
-    currency: 'USD',
-    L2: "optimism",
   }
 };
 
