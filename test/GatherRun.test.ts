@@ -2,8 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { deployUpgradableContract } from "./utils/deploy.utils";
-import { decodeTokenURIToJSON, getCurrentBlockTimestamp, signUpdateExperienceData } from "./utils/homunculi.utils";
-import { GatherRun } from "../typechain-types";
+import { Homunculi, GatherRun } from "../typechain-types";
 
 describe("GatherRun Contract", function () {
   let adminWallet: SignerWithAddress, otherWallet: SignerWithAddress;
@@ -13,11 +12,14 @@ describe("GatherRun Contract", function () {
   });
 
   let gatherRun: GatherRun & { address: string };
+  let homunculi: Homunculi & { address: string };
   beforeEach(async function () {
     gatherRun = await deployUpgradableContract(adminWallet, "GatherRun");
     await gatherRun.unpause();
-  });
 
+    homunculi = await deployUpgradableContract(adminWallet, "Homunculi");
+    await homunculi.unpause();
+  });
 
   describe("Deployment", function () {
     it("should creator as admin", async function () {
@@ -319,6 +321,63 @@ describe("GatherRun Contract", function () {
       await expect(
         gatherRun.updateRun(1, 7200, newDrops)
       ).to.be.revertedWith("Probability ranges must be sequential");
+    });
+  });
+
+  describe("Start expedition", function () {
+    beforeEach(async function () {
+      const initialDrops = [
+        {
+          resourceType: "FIRE_DUST",
+          resourceAmount: 1,
+          minProbability: 0,
+          maxProbability: 10000,
+        },
+      ];
+
+      await gatherRun.createRun(3600, initialDrops);
+      await gatherRun.acceptNftAddress(homunculi.address);
+
+      await homunculi.setNftDetails(
+        "Branos",
+        "Branos",
+        "bafybeiavfuy6wbhqwxgcl2sfdogtj7lxdeh7wtbectepcwwvkocusbvnx4",
+        ["MateriaPrima", "Homunculi", "Branos", "Laboratory", "Alchemist", "Arena"],
+        "png",
+        2500,
+        1000,
+        1,
+      );
+      await homunculi.setMintPrice("Branos", ethers.parseEther("0.1"));
+      await homunculi.mint("Branos", { value: ethers.parseEther("0.1") });
+    });
+
+    it("should set accepted NFT address", async function () {
+      expect(await gatherRun.acceptedNftAddresses(homunculi.address)).to.be.true;
+    });
+
+    it("should remove accepted NFT address", async function () {
+      await gatherRun.removeNftAddress(homunculi.address);
+      expect(await gatherRun.acceptedNftAddresses(homunculi.address)).to.be.false;
+    });
+
+    it("should allow a user to start an expedition", async function () {
+      await homunculi.approve(gatherRun.address, 1);
+      const transaction = await gatherRun.startExpedition(1, homunculi.address, 1);
+
+      const transactionTimestamp = (await ethers.provider.getBlock(transaction.blockHash as string))!.timestamp;
+
+      const lockedHomunculi = await gatherRun.getLockedHomunculi(homunculi.address, 1);
+      expect(lockedHomunculi.owner).to.equal(adminWallet.address);
+      expect(lockedHomunculi.unlockTime).to.equal(transactionTimestamp + 3600);
+      expect(lockedHomunculi.withdrawn).to.be.false;
+
+      const userLockedHomunculi = await gatherRun.getUserLockedHomunculi(adminWallet.address);
+      expect(userLockedHomunculi.length).to.equal(1);
+
+      const userLockedNFT = await gatherRun.userLockedNFTs(adminWallet.address, 0);
+      expect(userLockedNFT.nftAddress).to.equal(homunculi.address);
+      expect(userLockedNFT.tokenId).to.equal(1);
     });
   });
 });
