@@ -373,14 +373,16 @@ describe("GatherRun Contract", function () {
       expect(lockedHomunculi.unlockTime).to.equal(transactionTimestamp + 3600);
       expect(lockedHomunculi.withdrawn).to.be.false;
 
-      const userLockedHomunculi = await gatherRun.getUserLockedHomunculi(adminWallet.address);
-      expect(userLockedHomunculi.length).to.equal(1);
+      expect(await homunculi.ownerOf(1)).to.equal(gatherRun.address);
 
       const userLockedNFT = await gatherRun.userLockedNFTs(adminWallet.address, 0);
       expect(userLockedNFT.nftAddress).to.equal(homunculi.address);
       expect(userLockedNFT.tokenId).to.equal(1);
 
-      expect(await homunculi.ownerOf(1)).to.equal(gatherRun.address);
+
+      const [[userLockedNFT2], userLockedHomunculi] = await gatherRun.getUserLockedHomunculi(adminWallet.address);
+      expect(userLockedNFT2).to.deep.equal(userLockedNFT);
+      expect(userLockedHomunculi.length).to.equal(1);
     });
 
     it("should revert if the user does not own the NFT", async function () {
@@ -462,7 +464,7 @@ describe("GatherRun Contract", function () {
 
       expect(await homunculi.ownerOf(1)).to.equal(adminWallet.address);
 
-      const userLockedHomunculi = await gatherRun.getUserLockedHomunculi(adminWallet.address);
+      const [_, userLockedHomunculi] = await gatherRun.getUserLockedHomunculi(adminWallet.address);
       expect(userLockedHomunculi.length).to.equal(0);
 
       const endExpeditionEvent = (receipt?.logs[1] as any).args;

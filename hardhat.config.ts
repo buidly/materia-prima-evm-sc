@@ -2,6 +2,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import '@openzeppelin/hardhat-upgrades';
 import dotenv from "dotenv";
+import "hardhat-gas-reporter";
 
 import "./tasks";
 import { NetworkUserConfig } from "hardhat/types";
@@ -24,10 +25,9 @@ function getTaikoConfig(network: "hekla" | "mainnet"): NetworkUserConfig {
     "https://taiko-hekla.gateway.tenderly.co",
     "https://taiko-hekla.drpc.org",
     "https://taiko-hekla-rpc.publicnode.com",
-    "https://rpc.hekla.taiko.xyz",
-    "https://taiko-hekla.blockpi.network/v1/rpc/public",
     "https://rpc.ankr.com/taiko_hekla",
     "https://hekla.taiko.tools",
+    "https://taiko-hekla.blockpi.network/v1/rpc/public",
   ];
 
   const rpcUrls = {
@@ -56,6 +56,10 @@ const config: HardhatUserConfig = {
     hekla_taiko: getTaikoConfig("hekla"),
     mainnet_taiko: getTaikoConfig("mainnet"),
   },
+  gasReporter: {
+    currency: 'USD',
+    L2: "optimism",
+  }
 };
 
 export default config;

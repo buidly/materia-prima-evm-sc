@@ -1,0 +1,17 @@
+{
+  "nftId": "Taikos",
+  "name": "Taikos",
+  "collectionHash": "QmcKcnvy6pj5KtXeAnNUSqvibTpdCYy6R7HrZsVxSU2Wsu",
+  "tags": [
+    "MateriaPrima",
+    "Homunculi",
+    "Branos",
+    "Laboratory",
+    "Alchemist",
+    "Arena"
+  ],
+  "mediaType": "png",
+  "maxLen": 10000,
+  "royalties": 1000,
+  "tier": 1
+}
