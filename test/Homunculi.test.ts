@@ -404,7 +404,7 @@ describe("Homunculi Contract", function () {
       }
     });
 
-    it.skip("should not allow minting the same asset twice", async function () {
+    it("should not allow minting the same asset twice", async function () {
       const nftId = "TestNFT";
       const mintPrice = ethers.parseEther("0.000001");
       const maxSupply = 50_000;

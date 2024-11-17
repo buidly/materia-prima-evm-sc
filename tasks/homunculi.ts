@@ -27,6 +27,8 @@ export const getHomunculiContract = async (hre: HardhatRuntimeEnvironment) => {
 homunculiScope.task("deploy", "Deploys Homunculi contract")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
   .setAction(async (taskArgs, hre) => {
+    console.log('Using RPC URL:', (hre.network.config as any).url);
+
     const [adminWallet] = await hre.ethers.getSigners();
     console.log("Admin Public Address:", adminWallet.address);
 
@@ -43,6 +45,8 @@ homunculiScope.task("deploy", "Deploys Homunculi contract")
 homunculiScope.task("upgrade", "Upgrades Homunculi contract")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
   .setAction(async (_, hre) => {
+    console.log('Using RPC URL:', (hre.network.config as any).url);
+
     const [adminWallet] = await hre.ethers.getSigners();
     console.log("Admin Public Address: ", adminWallet.address);
 

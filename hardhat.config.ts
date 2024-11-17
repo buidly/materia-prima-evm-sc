@@ -2,6 +2,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import '@openzeppelin/hardhat-upgrades';
 import dotenv from "dotenv";
+import "hardhat-gas-reporter";
 
 import "./tasks";
 import { NetworkUserConfig } from "hardhat/types";
@@ -55,6 +56,10 @@ const config: HardhatUserConfig = {
     hekla_taiko: getTaikoConfig("hekla"),
     mainnet_taiko: getTaikoConfig("mainnet"),
   },
+  gasReporter: {
+    currency: 'USD',
+    L2: "optimism",
+  }
 };
 
 export default config;
