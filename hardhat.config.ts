@@ -30,9 +30,20 @@ function getTaikoConfig(network: "hekla" | "mainnet"): NetworkUserConfig {
     "https://taiko-hekla.blockpi.network/v1/rpc/public",
   ];
 
+  const mainnetRpcUrls = [
+    "https://taiko-rpc.publicnode.com",
+    "https://rpc.ankr.com/taiko",
+    "https://taiko-mainnet.gateway.tenderly.co",
+    "https://taiko.drpc.org",
+    "https://rpc.taiko.xyz",
+    "https://rpc.mainnet.taiko.xyz",
+    "https://rpc.taiko.tools",
+    "https://taiko-mainnet.rpc.porters.xyz/taiko-public",
+  ];
+
   const rpcUrls = {
     hekla: heklaRpcUrls[Math.floor(Math.random() * heklaRpcUrls.length)],
-    mainnet: "https://rpc.mainnet.taiko.xyz",
+    mainnet: mainnetRpcUrls[Math.floor(Math.random() * mainnetRpcUrls.length)],
   };
 
   const accounts = {

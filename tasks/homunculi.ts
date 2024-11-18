@@ -33,10 +33,11 @@ homunculiScope.task("deploy", "Deploys Homunculi contract")
     console.log("Admin Public Address:", adminWallet.address);
 
     console.log("Deploying Homunculi contract");
+
     const Homunculi = (await hre.ethers.getContractFactory("Homunculi")).connect(adminWallet);
     const homunculiContract = await hre.upgrades.deployProxy(Homunculi, { kind: "transparent", ...getDeployOptions(taskArgs) });
-
     await homunculiContract.waitForDeployment();
+
     console.log("Homunculi deployed to:", homunculiContract.target);
 
     updateSetupConfig(hre.network.name, 'homunculi', homunculiContract.target);
@@ -137,6 +138,17 @@ homunculiScope.task("mint", "Mints a Homunculi NFT")
 
     const mintPrice = await homunculi.mintPrice(id);
     const tx = await homunculi.mint(id, { value: mintPrice });
+
+    console.log("Mint successful", tx.hash);
+  });
+
+homunculiScope.task("free-mint", "Mints a Homunculi NFT")
+  .addParam("id", "Homunculi ID")
+  .addParam("to", "Address to mint to")
+  .setAction(async ({ id, to }, hre) => {
+    const homunculi = await getHomunculiContract(hre);
+
+    const tx = await homunculi.freeMint(id, to);
 
     console.log("Mint successful", tx.hash);
   });
