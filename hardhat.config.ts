@@ -3,6 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import '@openzeppelin/hardhat-upgrades';
 import dotenv from "dotenv";
 import "@nomicfoundation/hardhat-ledger";
+import "@nomicfoundation/hardhat-verify";
 
 import "./tasks";
 import { NetworkUserConfig } from "hardhat/types";
@@ -31,14 +32,13 @@ function getTaikoConfig(network: "hekla" | "mainnet"): NetworkUserConfig {
   ];
 
   const mainnetRpcUrls = [
-    "https://taiko-rpc.publicnode.com",
+    // "https://taiko-rpc.publicnode.com",
     "https://rpc.ankr.com/taiko",
-    "https://taiko-mainnet.gateway.tenderly.co",
-    "https://taiko.drpc.org",
-    "https://rpc.taiko.xyz",
-    "https://rpc.mainnet.taiko.xyz",
-    "https://rpc.taiko.tools",
-    "https://taiko-mainnet.rpc.porters.xyz/taiko-public",
+    // "https://taiko-mainnet.gateway.tenderly.co",
+    // "https://rpc.taiko.xyz",
+    // "https://rpc.mainnet.taiko.xyz",
+    // "https://rpc.taiko.tools",
+    // "https://taiko-mainnet.rpc.porters.xyz/taiko-public",
   ];
 
   const rpcUrls = {
@@ -75,6 +75,25 @@ const config: HardhatUserConfig = {
   networks: {
     hekla_taiko: getTaikoConfig("hekla"),
     mainnet_taiko: getTaikoConfig("mainnet"),
+  },
+  etherscan: {
+    apiKey: {
+      // Is not required by blockscout. Can be any non-empty string
+      mainnet_taiko: "abc"
+    },
+    customChains: [
+      {
+        network: "mainnet_taiko",
+        chainId: 167000,
+        urls: {
+          apiURL: "https://blockscoutapi.mainnet.taiko.xyz/api",
+          browserURL: "https://blockscoutapi.mainnet.taiko.xyz",
+        }
+      }
+    ]
+  },
+  sourcify: {
+    enabled: false
   }
 };
 

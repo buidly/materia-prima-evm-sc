@@ -1,11 +1,11 @@
 {
   "nftId": "Liska",
   "name": "Liska",
-  "collectionHash": "QmfSbnfEen6xjFqtwCMhdvqxYTAqhfCRzweYQPa7drpExg",
+  "collectionHash": "QmPxfyo8kApCTF2ctT32Tt4t2EdeBu3t7UXXSp5z39nfmD",
   "tags": [
     "MateriaPrima",
     "Homunculi",
-    "Branos",
+    "Liska",
     "Laboratory",
     "Alchemist",
     "Arena"
@@ -13,5 +13,5 @@
   "mediaType": "png",
   "maxLen": 5000,
   "royalties": 1000,
-  "tier": 1
+  "tier": 2
 }
