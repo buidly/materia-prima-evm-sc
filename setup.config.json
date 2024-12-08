@@ -1,6 +1,9 @@
 {
+  "mainnet_taiko": {
+    "homunculi": "0x5AF01242da2d86FdF635744156c0a3B8d83Ab165"
+  },
   "hekla_taiko": {
-    "homunculi": "0x467c7D15C2f1acD36f7651244474DB00779f18d5",
+    "homunculi": "0x724F4baBd82C67887362564AB98AFB52c8323653",
     "gather-run": "0xE4571c6e2bd85C991DaB905E5b5c7767E58A72EA",
     "gather-run-locations": [
       {

@@ -2,7 +2,8 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import '@openzeppelin/hardhat-upgrades';
 import dotenv from "dotenv";
-import "hardhat-gas-reporter";
+import "@nomicfoundation/hardhat-ledger";
+import "@nomicfoundation/hardhat-verify";
 
 import "./tasks";
 import { NetworkUserConfig } from "hardhat/types";
@@ -18,7 +19,7 @@ const privateKey = `0x${process.env.PRIVATE_KEY}`;
 function getTaikoConfig(network: "hekla" | "mainnet"): NetworkUserConfig {
   const chainIds = {
     hekla: 167009,
-    mainnet: 1, // TODO: Change to mainnet
+    mainnet: 167000,
   };
 
   const heklaRpcUrls = [
@@ -30,15 +31,34 @@ function getTaikoConfig(network: "hekla" | "mainnet"): NetworkUserConfig {
     "https://taiko-hekla.blockpi.network/v1/rpc/public",
   ];
 
+  const mainnetRpcUrls = [
+    // "https://taiko-rpc.publicnode.com",
+    "https://rpc.ankr.com/taiko",
+    // "https://taiko-mainnet.gateway.tenderly.co",
+    // "https://rpc.taiko.xyz",
+    // "https://rpc.mainnet.taiko.xyz",
+    // "https://rpc.taiko.tools",
+    // "https://taiko-mainnet.rpc.porters.xyz/taiko-public",
+  ];
+
   const rpcUrls = {
     hekla: heklaRpcUrls[Math.floor(Math.random() * heklaRpcUrls.length)],
-    mainnet: "https://rpc.hekla.taiko.xyz", // TODO: Change to mainnet
+    mainnet: mainnetRpcUrls[Math.floor(Math.random() * mainnetRpcUrls.length)],
   };
+
+  const accounts = {
+    hekla: {
+      accounts: [privateKey],
+    },
+    mainnet: {
+      ledgerAccounts: [process.env.LEDGER_ACCOUNT] as string[],
+    },
+  }
 
   return {
     url: rpcUrls[network],
     chainId: chainIds[network],
-    accounts: [privateKey],
+    ...accounts[network],
   };
 }
 
@@ -56,9 +76,24 @@ const config: HardhatUserConfig = {
     hekla_taiko: getTaikoConfig("hekla"),
     mainnet_taiko: getTaikoConfig("mainnet"),
   },
-  gasReporter: {
-    currency: 'USD',
-    L2: "optimism",
+  etherscan: {
+    apiKey: {
+      // Is not required by blockscout. Can be any non-empty string
+      mainnet_taiko: "abc"
+    },
+    customChains: [
+      {
+        network: "mainnet_taiko",
+        chainId: 167000,
+        urls: {
+          apiURL: "https://blockscoutapi.mainnet.taiko.xyz/api",
+          browserURL: "https://blockscoutapi.mainnet.taiko.xyz",
+        }
+      }
+    ]
+  },
+  sourcify: {
+    enabled: false
   }
 };
 

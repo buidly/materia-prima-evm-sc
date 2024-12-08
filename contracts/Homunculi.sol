@@ -221,7 +221,7 @@ contract Homunculi is
         require(_ownerOf(tokenId) == msg.sender, "Not the owner of this token");
         require(signerAddress != address(0), "Signer address not set");
         require(timestamp >= block.timestamp - 120, "Invalid timestamp");
-        require(timestamp <= block.timestamp + 300, "Signature expired");
+        require(timestamp <= block.timestamp + 1500, "Signature expired");
 
         uint256 oldExperience = experience[tokenId];
         require(
